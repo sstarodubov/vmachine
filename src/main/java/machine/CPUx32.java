@@ -12,8 +12,7 @@ public class CPUx32 {
     private final SysCallTable sysCallTable;
     public final Registers registers;
 
-    @Setter
-    int statusCode = 0;
+    public int statusCode = 0;
 
 
     public int run() {
