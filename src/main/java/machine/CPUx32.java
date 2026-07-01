@@ -1,7 +1,6 @@
 package machine;
 
 import lombok.Builder;
-import lombok.Setter;
 
 import static machine.utils.Assertions.require;
 
