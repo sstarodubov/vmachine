@@ -1,14 +1,9 @@
-import machine.CPUx32;
-import machine.Memory;
-import machine.Registers;
-import machine.SysCallTable;
+import machine.*;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
 
-import static machine.Opcodes.movl;
-import static machine.Opcodes.syscall;
 import static machine.OperandType.*;
 
 class CPUx32Test {
@@ -27,9 +22,9 @@ class CPUx32Test {
                 .sysCallTable(new SysCallTable())
                 .memory(Memory.builder()
                         .textSegment(ByteBuffer.wrap(new byte[]{
-                                movl, NUMBER.code(), 0, 0, 0, 60, REGISTER.code(), 0, 0, 0, Registers.eax,
-                                movl, NUMBER.code(), 0, 0, 0, 22, REGISTER.code(), 0, 0, 0, Registers.edi,
-                                syscall
+                                Opcode.MOVL.code, NUMBER.code, 0, 0, 0, 60, REGISTER.code, 0, 0, 0, Registers.eax,
+                                Opcode.MOVL.code, NUMBER.code, 0, 0, 0, 22, REGISTER.code, 0, 0, 0, Registers.edi,
+                                Opcode.SYSCALL.code
                         }))
                         .build())
                 .build();

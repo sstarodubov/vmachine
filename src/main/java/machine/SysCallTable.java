@@ -15,7 +15,7 @@ public final class SysCallTable {
     }
 
     private void registerSysCall(final SysCall sysCall) {
-        require(syscalls[sysCall.id()] != null, "syscalls must be unique");
+        require(syscalls[sysCall.id()] == null, "syscalls must be unique");
         syscalls[sysCall.id()] = sysCall;
     }
 

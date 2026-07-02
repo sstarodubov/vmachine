@@ -4,15 +4,12 @@ public enum OperandType {
 
     NUMBER((byte) 0x1), REGISTER((byte) 0x2);//, MEMORY((byte) 0x3);
 
-    private final byte code;
+    public final byte code;
 
     OperandType(byte i) {
         this.code = i;
     }
 
-    public byte code() {
-        return this.code;
-    }
 
     public static OperandType fromByte(final byte b) {
         return switch (b) {

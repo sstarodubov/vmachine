@@ -1,6 +1,7 @@
 package machine;
 
 import lombok.Builder;
+import machine.utils.Assertions;
 
 import static machine.utils.Assertions.require;
 
@@ -38,12 +39,14 @@ public class CPUx32 {
             Command Structure:
             [Opcode] [количество операндов] [...типы операндов] [...операнды]
          */
-        byte curOpcode;
+        Opcode curOpcode;
+        byte curByte;
         while (registers.readEip() < memory.textSegmentSize()) {
-            curOpcode = readTextByte();
-
+            curByte = readTextByte();
+            curOpcode = Opcode.fromByte(curByte);
+            require(curOpcode != null, "unknown opcode: %d".formatted(curByte));
             switch (curOpcode) {
-                case Opcodes.movl -> {
+                case Opcode.MOVL -> {
                     final OperandType type1 = OperandType.fromByte(readTextByte());
                     final int val1 = readTextInt();
                     final OperandType type2 = OperandType.fromByte(readTextByte());
@@ -57,12 +60,11 @@ public class CPUx32 {
                     require(type2 == OperandType.REGISTER, "movl. 2's operand must be register");
                     registers.writeInt(idx, source);
                 }
-                case Opcodes.syscall -> {
+                case Opcode.SYSCALL -> {
                     final int syscallId = registers.readEax();
                     sysCallTable.executeOn(this, syscallId);
                 }
-
-                default -> throw new IllegalStateException("unknown opcode: %d".formatted(curOpcode));
+                case Opcode.NOP -> {}
             }
         }
 

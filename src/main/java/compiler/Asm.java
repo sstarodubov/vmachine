@@ -1,0 +1,177 @@
+package compiler;
+
+import machine.Opcode;
+import machine.OperandType;
+import machine.Registers;
+
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static compiler.Asm.ProcessedSection.HEADER;
+import static machine.utils.Assertions.require;
+
+public final class Asm {
+    enum ProcessedSection {
+        BSS, TEXT, HEADER, DATA
+    }
+
+    private ProcessedSection processedSection = HEADER;
+    private final Tokenizer tokenizer;
+    private Token curToken = null;
+    private final ByteBuffer codeBuff;
+    private final List<String> globals = new ArrayList<>();
+    private final Map<String, Integer> labels = new HashMap<>();
+
+    int codePos = 32  /*32 bytes for header*/;
+    int textSegStart = -1;
+    int textSegEnd = -1;
+    int dataSegStart = -1;
+    int dataSegEnd = -1;
+
+    public Asm(final String program) {
+        this.tokenizer = new Tokenizer(program);
+        this.codeBuff = ByteBuffer.allocate(64);
+    }
+
+    private void consume(final TokenType expectedType) {
+        require(curToken.type() == expectedType, "unexpected token: %s. expected: %s".formatted(curToken, expectedType));
+        curToken = tokenizer.nextToken();
+    }
+
+    private void consume() {
+        curToken = tokenizer.nextToken();
+    }
+
+    public ByteBuffer compile() {
+        curToken = tokenizer.nextToken();
+        while (curToken.type() != TokenType.EOF) {
+            switch (curToken.type()) {
+                case HASHTAG -> compileComment();
+                case DOT -> compileDot();
+                case EOL -> consume(TokenType.EOL);
+                case STRING -> compileString();
+                default -> throw new IllegalStateException("unexpected token type: %s".formatted(curToken.type()));
+            }
+        }
+        closeProcessingSections();
+        return codeBuff;
+    }
+
+    private void appendToCodeBuff(int num, int size) {
+        switch (size) {
+            case 4 -> codeBuff.putInt(codePos, num);
+            case 2 -> codeBuff.putShort(codePos, (short) num);
+            case 1 -> codeBuff.put(codePos, (byte) num);
+            default -> throw new IllegalStateException("unsupported num size: %d".formatted(size));
+        }
+        codePos+=size;
+    }
+
+    private void compileOperands(final int operCount, final int operSize) {
+        for (int i = 0; i < operCount; i++) {
+            if (i != 0) {
+                consume(TokenType.COMMA);
+            }
+            switch (curToken.type()) {
+                case DOLLAR -> {
+                    consume(TokenType.DOLLAR);
+                    require(curToken.type() == TokenType.NUMBER, "after $ must be int, but %s".formatted(curToken));
+                    final int num = Integer.parseInt(curToken.lexeme());
+                    appendToCodeBuff(OperandType.NUMBER.code, 1);
+                    appendToCodeBuff(num, operSize);
+                    consume(TokenType.NUMBER);
+                }
+                case PERCENT -> {
+                    consume(TokenType.PERCENT);
+                    require(curToken.type() == TokenType.STRING, "after percent must be name of register, but: %s".formatted(curToken));
+                    final int regId = Registers.registerIdFromName(curToken.lexeme());
+                    require(regId != -1, "register id must be known");
+                    appendToCodeBuff(OperandType.REGISTER.code, 1);
+                    appendToCodeBuff(regId, 4);
+                    consume(TokenType.STRING);
+                }
+            }
+
+
+        }
+    }
+
+    private void compileString() {
+        switch (Opcode.fromString(curToken.lexeme())) {
+            case MOVL -> {
+                appendToCodeBuff(Opcode.MOVL.code, 1);
+                consume(TokenType.STRING);
+                compileOperands(2, 4);
+            }
+            case SYSCALL -> {
+                appendToCodeBuff(Opcode.SYSCALL.code, 1);
+                consume(TokenType.STRING);
+            }
+            case NOP -> {
+            }
+            case null -> {
+                // it is label
+                final var labelName = curToken.lexeme();
+                consume(TokenType.STRING);
+                consume(TokenType.COLON);
+                labels.put(labelName, codePos);
+            }
+        }
+    }
+
+    private void compileDot() {
+        consume(TokenType.DOT);
+        require(curToken.type() == TokenType.STRING, "after '.' symbol must be string. But: %s".formatted(curToken));
+        switch (curToken.lexeme()) {
+            case "globl" -> {
+                consume(TokenType.STRING);
+                final String directive = curToken.lexeme();
+
+                globals.add(directive);
+                consume(TokenType.STRING);
+            }
+            case "section" -> {
+                consume(TokenType.STRING);
+                consume(TokenType.DOT);
+                final String sectionName = curToken.lexeme();
+                switch (sectionName) {
+                    case "text" -> {
+                        require(textSegStart == -1, "section text must be one");
+                        textSegStart = codePos;
+                        closeProcessingSections();
+                        processedSection = ProcessedSection.TEXT;
+                    }
+                    case "data" -> {
+                        require(dataSegStart == -1, "section data must be one");
+                        dataSegStart = codePos;
+                        closeProcessingSections();
+                        processedSection = ProcessedSection.DATA;
+                    }
+                    default -> throw new IllegalStateException("unknown section: %s".formatted(sectionName));
+                }
+                consume(TokenType.STRING);
+            }
+            default -> throw new IllegalStateException("unknown string '%s' after dot".formatted(curToken.lexeme()));
+        }
+    }
+
+    void closeProcessingSections() {
+        switch (processedSection) {
+            case TEXT -> textSegEnd = codePos - 1;
+            case DATA -> dataSegEnd = codePos - 1;
+            case HEADER -> {
+            }
+            default -> throw new IllegalStateException("unexpected section to close: %s".formatted(processedSection));
+        }
+    }
+
+    private void compileComment() {
+        while (curToken.type() != TokenType.EOL) {
+            consume();
+        }
+        consume(TokenType.EOL);
+    }
+}

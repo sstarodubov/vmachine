@@ -2,7 +2,7 @@ package machine;
 
 import java.nio.ByteBuffer;
 
-public class Registers {
+public final class Registers {
 
     private final ByteBuffer mem;
 
@@ -28,6 +28,23 @@ public class Registers {
     public static final int edi = 28; //(Destination index): указатель на место назначения в операциях с массивами
     public static final int eip = 32; // указатель адреса следующей инструкции для выполнения
 
+    public static int registerIdFromName(final String regName) {
+        return switch (regName) {
+            case "eax" -> 0;
+            case "ax", "ah" -> 2;
+            case "al" -> 3;
+            case "ecx" -> 4;
+            case "edx" -> 8;
+            case "ebx" -> 12;
+            case "esp" -> 16;
+            case "ebp" -> 20;
+            case "esi" -> 24;
+            case "edi" -> 28;
+            case "eip" -> 32;
+            default -> -1;
+        };
+    }
+
     // eip
     public int readEip() {
         return readInt(eip);
@@ -42,7 +59,7 @@ public class Registers {
     }
 
     public void addEip(int k) {
-       writeEip(readEip() + k);
+        writeEip(readEip() + k);
     }
 
     // edi
@@ -83,7 +100,7 @@ public class Registers {
 
     //ebx
     public int readEbx() {
-      return readInt(ebx);
+        return readInt(ebx);
     }
 
     public void writeEbx(int val) {
