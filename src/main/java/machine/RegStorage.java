@@ -45,15 +45,9 @@ public final class RegStorage {
         };
     }
 
-
-    public static boolean isCompatible(final int num, final String regName) {
+    public static boolean isCompatible(final int numSize, final String regName) {
         final int regSize = RegStorage.getRegisterSize(regName);
-        return switch (regSize) {
-            case 1 ->  num >= Byte.MIN_VALUE && num <= Byte.MAX_VALUE;
-            case 2 ->  num >= Short.MIN_VALUE && num <= Short.MAX_VALUE;
-            case 4 ->  true;
-            default -> false;
-        };
+        return numSize == regSize;
     }
 
     public static int getRegisterSize(final String regName) {

@@ -108,33 +108,24 @@ public final class Asm {
         codePos += size;
     }
 
-    private void compileOperands(final int operCount, final int operSize) {
-        for (int i = 0; i < operCount; i++) {
-            if (i != 0) {
-                consume(TokenType.COMMA);
-            }
-            switch (curToken.type()) {
-                case DOLLAR -> {
-                    consume(TokenType.DOLLAR);
-                    require(curToken.type() == TokenType.NUMBER, "after $ must be int, but %s".formatted(curToken));
-                    final int num = Integer.parseInt(curToken.lexeme());
-                    appendToCodeBuff(OperandType.NUMBER.code, 1);
-                    appendToCodeBuff(num, operSize);
-                    consume(TokenType.NUMBER);
-                }
-                case PERCENT -> {
-                    consume(TokenType.PERCENT);
-                    require(curToken.type() == TokenType.STRING, "after percent must be name of register, but: %s".formatted(curToken));
-                    final int regId = RegStorage.registerIdFromName(curToken.lexeme());
-                    require(regId != -1, "register id must be known");
-                    appendToCodeBuff(OperandType.REGISTER.code, 1);
-                    appendToCodeBuff(regId, 1);
-                    consume(TokenType.STRING);
-                }
-            }
+    private void compileMovOperands(final int operCount, final int operSize) {
+        consume(TokenType.DOLLAR);
+        require(curToken.type() == TokenType.NUMBER, "after $ must be int, but %s".formatted(curToken));
+        final int num = Integer.parseInt(curToken.lexeme());
+        appendToCodeBuff(OperandType.NUMBER.code, 1);
+        appendToCodeBuff(num, operSize);
+        consume(TokenType.NUMBER);
 
+        consume(TokenType.COMMA);
 
-        }
+        consume(TokenType.PERCENT);
+        require(curToken.type() == TokenType.STRING, "after percent must be name of register, but: %s".formatted(curToken));
+        final int regId = RegStorage.registerIdFromName(curToken.lexeme());
+        require(regId != -1, "register id must be known");
+        require(RegStorage.isCompatible(operSize, curToken.lexeme()), "register must have size %d".formatted(operSize));
+        appendToCodeBuff(OperandType.REGISTER.code, 1);
+        appendToCodeBuff(regId, 1);
+        consume(TokenType.STRING);
     }
 
 
@@ -143,7 +134,7 @@ public final class Asm {
             case MOVL -> {
                 appendToCodeBuff(Opcode.MOVL.code, 1);
                 consume(TokenType.STRING);
-                compileOperands(2, 4);
+                compileMovOperands(2, 4);
             }
             case SYSCALL -> {
                 appendToCodeBuff(Opcode.SYSCALL.code, 1);
