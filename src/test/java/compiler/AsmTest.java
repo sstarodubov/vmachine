@@ -1,9 +1,6 @@
 package compiler;
 
-import machine.CPUx32;
-import machine.Memory;
-import machine.Registers;
-import machine.SysCallTable;
+import machine.CPU;
 import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
@@ -15,8 +12,8 @@ class AsmTest {
     @Test
     void test() {
         /*
-                movl, NUMBER.code(), 0, 0, 0, 60, REGISTER.code(), 0, 0, 0, Registers.eax,
-                movl, NUMBER.code(), 0, 0, 0, 22, REGISTER.code(), 0, 0, 0, Registers.edi,
+                movl, NUMBER.code(), 0, 0, 0, 60, REGISTER.code(), Registers.eax,
+                movl, NUMBER.code(), 0, 0, 0, 22, REGISTER.code(), Registers.edi,
                 syscall
          */
         final var program = """
@@ -32,15 +29,8 @@ class AsmTest {
 
         final  var asm = new Asm(program);
         final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
 
-        final var cpu = CPUx32.builder()
-                .registers(new Registers())
-                .sysCallTable(new SysCallTable())
-                .memory(Memory.builder()
-                        .textSegment(code)
-                        .build())
-                .build();
-
-        assertEquals(22, cpu.run(32));
+        assertEquals(22, cpu.run(code));
     }
 }

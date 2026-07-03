@@ -1,10 +1,10 @@
 package machine.syscalls;
 
-import machine.CPUx32;
+import machine.CPU;
 
 public interface SysCall {
 
-    void execute(CPUx32 cpUx32);
+    void execute(CPU CPU);
 
     int id();
 }

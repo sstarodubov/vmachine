@@ -2,23 +2,20 @@ package compiler;
 
 import machine.Opcode;
 import machine.OperandType;
-import machine.Registers;
+import machine.RegStorage;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-import static compiler.Asm.ProcessedSection.HEADER;
+import static compiler.Asm.ProcessedSection.INIT;
 import static machine.utils.Assertions.require;
 
 public final class Asm {
     enum ProcessedSection {
-        BSS, TEXT, HEADER, DATA
+        BSS, TEXT, DATA, INIT
     }
 
-    private ProcessedSection processedSection = HEADER;
+    private ProcessedSection processedSection = INIT;
     private final Tokenizer tokenizer;
     private Token curToken = null;
     private final ByteBuffer codeBuff;
@@ -57,7 +54,48 @@ public final class Asm {
             }
         }
         closeProcessingSections();
+        postHandle();
         return codeBuff;
+    }
+
+    private void postHandle() {
+        fillHeader();
+    }
+
+    private void fillHeader() {
+        /* header structure:
+           0: address of main function
+           4: text segment start
+           8: text segment end
+           12: data segment start
+           16: data segment end
+         */
+
+        //main function
+        require(globals.size() == 1, "only one main function is allowed");
+        final String mainFn = globals.getFirst();
+        final Integer addrMainFn = labels.get(mainFn);
+        require(addrMainFn != null, "address of main function must exists");
+        writeToCodeBuff(0, addrMainFn, 4);
+
+        // text segment
+        writeToCodeBuff(4, textSegStart, 4);
+        writeToCodeBuff(8, textSegEnd, 4);
+
+        // data segment
+        writeToCodeBuff(12, dataSegStart, 4);
+        writeToCodeBuff(16, dataSegEnd, 4);
+
+        codeBuff.limit(codePos);
+    }
+
+    private void writeToCodeBuff(final int pos, final int data, final int size) {
+        switch (size) {
+            case 4 -> codeBuff.putInt(pos, data);
+            case 2 -> codeBuff.putShort(pos, (short) data);
+            case 1 -> codeBuff.put(pos, (byte) data);
+            default -> throw new IllegalStateException("unsupported num size: %d".formatted(size));
+        }
     }
 
     private void appendToCodeBuff(int num, int size) {
@@ -67,7 +105,7 @@ public final class Asm {
             case 1 -> codeBuff.put(codePos, (byte) num);
             default -> throw new IllegalStateException("unsupported num size: %d".formatted(size));
         }
-        codePos+=size;
+        codePos += size;
     }
 
     private void compileOperands(final int operCount, final int operSize) {
@@ -87,10 +125,10 @@ public final class Asm {
                 case PERCENT -> {
                     consume(TokenType.PERCENT);
                     require(curToken.type() == TokenType.STRING, "after percent must be name of register, but: %s".formatted(curToken));
-                    final int regId = Registers.registerIdFromName(curToken.lexeme());
+                    final int regId = RegStorage.registerIdFromName(curToken.lexeme());
                     require(regId != -1, "register id must be known");
                     appendToCodeBuff(OperandType.REGISTER.code, 1);
-                    appendToCodeBuff(regId, 4);
+                    appendToCodeBuff(regId, 1);
                     consume(TokenType.STRING);
                 }
             }
@@ -98,6 +136,7 @@ public final class Asm {
 
         }
     }
+
 
     private void compileString() {
         switch (Opcode.fromString(curToken.lexeme())) {
@@ -162,7 +201,7 @@ public final class Asm {
         switch (processedSection) {
             case TEXT -> textSegEnd = codePos - 1;
             case DATA -> dataSegEnd = codePos - 1;
-            case HEADER -> {
+            case INIT -> {
             }
             default -> throw new IllegalStateException("unexpected section to close: %s".formatted(processedSection));
         }

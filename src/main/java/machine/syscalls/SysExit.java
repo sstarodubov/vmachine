@@ -1,12 +1,12 @@
 package machine.syscalls;
 
-import machine.CPUx32;
+import machine.CPU;
 
 public class SysExit implements SysCall {
 
     @Override
-    public void execute(final CPUx32 cpu) {
-        cpu.statusCode = cpu.registers.readEdi();
+    public void execute(final CPU cpu) {
+        cpu.statusCode = cpu.regStorage.readEdi();
     }
 
     @Override

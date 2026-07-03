@@ -2,15 +2,15 @@ package machine;
 
 import java.nio.ByteBuffer;
 
-public final class Registers {
+public final class RegStorage {
 
     private final ByteBuffer mem;
 
-    public Registers() {
+    public RegStorage() {
         this.mem = ByteBuffer.allocate(/*registers*/9 * /*size of reg*/4);
     }
 
-    public Registers(ByteBuffer byteBuffer) {
+    public RegStorage(ByteBuffer byteBuffer) {
         this.mem = byteBuffer;
     }
 
@@ -42,6 +42,25 @@ public final class Registers {
             case "edi" -> 28;
             case "eip" -> 32;
             default -> -1;
+        };
+    }
+
+
+    public static boolean isCompatible(final int num, final String regName) {
+        final int regSize = RegStorage.getRegisterSize(regName);
+        return switch (regSize) {
+            case 1 ->  num >= Byte.MIN_VALUE && num <= Byte.MAX_VALUE;
+            case 2 ->  num >= Short.MIN_VALUE && num <= Short.MAX_VALUE;
+            case 4 ->  true;
+            default -> false;
+        };
+    }
+
+    public static int getRegisterSize(final String regName) {
+        return switch (regName) {
+            case "ax" -> 2;
+            case "al", "ah" -> 1;
+            default -> 4;
         };
     }
 

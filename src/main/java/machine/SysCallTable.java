@@ -19,7 +19,7 @@ public final class SysCallTable {
         syscalls[sysCall.id()] = sysCall;
     }
 
-    public void executeOn(final CPUx32 cpUx32, final int sysCallId) {
-        syscalls[sysCallId].execute(cpUx32);
+    public void executeOn(final CPU CPU, final int sysCallId) {
+        syscalls[sysCallId].execute(CPU);
     }
 }
