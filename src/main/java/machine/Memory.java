@@ -24,15 +24,25 @@ public final class Memory {
         return textSegEndIdx + 1;
     }
 
-    public byte readTextByte(int offset) {
+    public byte readTextByte(final int offset) {
         Assertions.require(offset >= textSegStartIdx, "seg fault: %d".formatted(offset));
         Assertions.require(offset <= textSegEndIdx, "seg fault: %d".formatted(offset));
         return mem.get(offset);
     }
 
-    public int readTextInt(int offset) {
+    public short readTextShort(final int offset) {
+        Assertions.require(offset <= textSegEndIdx, "seg fault: %d".formatted(offset));
+        Assertions.require(offset >= textSegStartIdx, "seg fault: %d".formatted(offset));
+        return mem.getShort(offset);
+    }
+
+
+    public int readTextInt(final int offset) {
+        Assertions.require(offset <= textSegEndIdx, "seg fault: %d".formatted(offset));
+        Assertions.require(offset >= textSegStartIdx, "seg fault: %d".formatted(offset));
         return mem.getInt(offset);
     }
+
 
     public void loadCode(final ByteBuffer code) {
         /* header structure:

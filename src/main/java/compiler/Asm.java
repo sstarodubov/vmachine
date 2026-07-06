@@ -3,6 +3,7 @@ package compiler;
 import machine.Opcode;
 import machine.OperandType;
 import machine.RegStorage;
+import machine.utils.IntegerUtils;
 
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -111,7 +112,7 @@ public final class Asm {
     private void compileMovOperands(final int operCount, final int operSize) {
         consume(TokenType.DOLLAR);
         require(curToken.type() == TokenType.NUMBER, "after $ must be int, but %s".formatted(curToken));
-        final int num = Integer.parseInt(curToken.lexeme());
+        final int num = IntegerUtils.parseInt(curToken.lexeme());
         appendToCodeBuff(OperandType.NUMBER.code, 1);
         appendToCodeBuff(num, operSize);
         consume(TokenType.NUMBER);
@@ -122,7 +123,8 @@ public final class Asm {
         require(curToken.type() == TokenType.STRING, "after percent must be name of register, but: %s".formatted(curToken));
         final int regId = RegStorage.registerIdFromName(curToken.lexeme());
         require(regId != -1, "register id must be known");
-        require(RegStorage.isCompatible(operSize, curToken.lexeme()), "register must have size %d".formatted(operSize));
+        require(RegStorage.isCompatibleSize(num, curToken.lexeme()), "register must have size %d".formatted(operSize));
+        require(RegStorage.isCompatibleMovSemantic(operSize, curToken.lexeme()), "incorrect register id '%d' used with `%d' size".formatted(regId, operSize));
         appendToCodeBuff(OperandType.REGISTER.code, 1);
         appendToCodeBuff(regId, 1);
         consume(TokenType.STRING);
@@ -141,6 +143,16 @@ public final class Asm {
                 consume(TokenType.STRING);
             }
             case NOP -> {
+            }
+            case MOVW -> {
+                appendToCodeBuff(Opcode.MOVW.code, 1);
+                consume(TokenType.STRING);
+                compileMovOperands(2, 2);
+            }
+            case MOVB -> {
+                appendToCodeBuff(Opcode.MOVB.code, 1);
+                consume(TokenType.STRING);
+                compileMovOperands(2, 1);
             }
             case null -> {
                 // it is label

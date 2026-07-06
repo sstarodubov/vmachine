@@ -63,7 +63,12 @@ public class Tokenizer {
         while (pos < input.length() && Character.isDigit(input.charAt(pos))) {
             lexeme.append(input.charAt(pos++));
         }
-
+        //parse hex
+        if (input.charAt(pos) == 'x') {
+            do {
+                lexeme.append(input.charAt(pos++));
+            } while (pos < input.length() && Character.isDigit(input.charAt(pos)));
+        }
         return new Token(TokenType.NUMBER, lexeme.toString());
     }
 

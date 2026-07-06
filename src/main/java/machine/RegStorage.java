@@ -45,9 +45,18 @@ public final class RegStorage {
         };
     }
 
-    public static boolean isCompatible(final int numSize, final String regName) {
+    public static boolean isCompatibleMovSemantic(final int operSize, final String regName) {
+        return operSize == RegStorage.getRegisterSize(regName);
+    }
+
+    public static boolean isCompatibleSize(final int num, final String regName) {
         final int regSize = RegStorage.getRegisterSize(regName);
-        return numSize == regSize;
+        return switch (regSize) {
+            case 1 -> num >= Byte.MIN_VALUE && num <= Byte.MAX_VALUE;
+            case 2 -> num >= Short.MIN_VALUE && num <= Short.MAX_VALUE;
+            case 4 -> true;
+            default -> false;
+        };
     }
 
     public static int getRegisterSize(final String regName) {
