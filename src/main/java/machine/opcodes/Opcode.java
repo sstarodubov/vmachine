@@ -1,9 +1,9 @@
 package machine.opcodes;
 
 import java.util.Arrays;
-import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
-import static machine.utils.Assertions.require;
 
 public enum Opcode {
 
@@ -21,35 +21,18 @@ public enum Opcode {
         this.name = name;
     }
 
-    private static List<String> opcodeNames = Arrays.stream(Opcode.values())
-            .map(op -> op.name).toList();
+    private static final Opcode[] opcodes = Opcode.values();
+    private static final Map<String, Opcode> opcodeNames = Arrays.stream(opcodes)
+            .collect(Collectors.toMap(opcode -> opcode.name, opcode -> opcode));
 
     public static Opcode fromByte(final byte val) {
-        return switch (val) {
-            case 0x1 -> Opcode.SYSCALL;
-            case 0x2 -> Opcode.MOVL;
-            case 0 -> Opcode.NOP;
-            case 0x3 -> Opcode.MOVW;
-            case 0x4 -> Opcode.MOVB;
-            default -> null;
-        };
+        if (val < 0 | val >= opcodes.length) {
+            return null;
+        }
+        return opcodes[val];
     }
-
 
     public static Opcode fromString(final String val) {
-        return switch (val) {
-            case "syscall" -> Opcode.SYSCALL;
-            case "movl" -> Opcode.MOVL;
-            case "movw" -> Opcode.MOVW;
-            case "movb" -> Opcode.MOVB;
-            case "nop" -> Opcode.NOP;
-            default -> null;
-        };
+        return opcodeNames.get(val);
     }
-
-    public static boolean isOpcode(final String name) {
-        require(name != null, "name must be not null");
-        return opcodeNames.contains(name);
-    }
-
 }
