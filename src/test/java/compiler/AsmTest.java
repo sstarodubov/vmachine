@@ -84,10 +84,7 @@ class AsmTest {
                 """;
 
         final var asm = new Asm(program);
-        final ByteBuffer code = asm.compile();
-        final var cpu = new CPU();
-
-        assertThrows(IllegalStateException.class, () -> cpu.run(code));
+        assertThrows(IllegalStateException.class, () -> asm.compile());
     }
 
 
@@ -131,6 +128,11 @@ class AsmTest {
 
     @Test
     void test6() {
+         /*
+                movl(2), NUMBER.code()(1), 0, 0, 0, 1, REGISTER.code()(2), Registers.eax(0),
+                movl(2), REGISTOR.code()(2), Registers.eax(0), REGISTER.code()(2), Registers.edi(8),
+                syscall
+         */
         final var program = """
                  # first program
                 .globl _start

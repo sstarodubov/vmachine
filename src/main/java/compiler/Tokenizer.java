@@ -74,7 +74,9 @@ public class Tokenizer {
 
     private Token readString() {
         final var lexeme = new StringBuilder();
-        while (pos < input.length() && !Character.isWhitespace(input.charAt(pos)) && input.charAt(pos) != ':') {
+        while (pos < input.length() && !Character.isWhitespace(input.charAt(pos)) && input.charAt(pos) != ':'
+                && input.charAt(pos) != ','
+        ) {
            lexeme.append(input.charAt(pos++));
         }
 

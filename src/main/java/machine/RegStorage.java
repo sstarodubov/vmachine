@@ -45,6 +45,10 @@ public final class RegStorage {
         };
     }
 
+    public static boolean isEq(final String reg1, final String reg2) {
+        return RegStorage.getRegisterSize(reg2) == RegStorage.getRegisterSize(reg1);
+    }
+
     public static boolean isCompatibleMovSemantic(final int operSize, final String regName) {
         return operSize == RegStorage.getRegisterSize(regName);
     }

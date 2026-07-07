@@ -1,12 +1,22 @@
 package machine;
 
+import machine.opcodes.Opcode;
+import machine.opcodes.Cell;
+import machine.opcodes.RegisterCell;
 import machine.utils.Pair;
 
 import java.nio.ByteBuffer;
 
+import static machine.OperandType.REGISTER;
 import static machine.utils.Assertions.require;
 
 public final class CPU {
+
+    record Transfer(
+            int data, // что положить
+            Cell cell // в какую ячейку положить
+    ) {
+    }
 
     private final Memory memory;
     private final SysCallTable sysCallTable;
@@ -55,26 +65,35 @@ public final class CPU {
             require(curOpcode != null, "unknown opcode: %d".formatted(curByte));
             switch (curOpcode) {
                 case Opcode.MOVL -> {
-                    final Pair<Integer, Integer>  pair = doMov(4);
-                    final int idx = pair.left();
-                    final int source = pair.right();
-                    regStorage.writeInt(idx, source);
+                    final Transfer t = prepareMovTransfer(4);
+                    switch (t.cell()) {
+                        case RegisterCell(int registerId) -> regStorage.writeInt(registerId, t.data());
+                        case null, default ->
+                                throw new UnsupportedOperationException("unsupported cell destination: %s".formatted(t.cell()));
+                    }
                 }
                 case MOVW -> {
-                    final Pair<Integer, Integer>  pair = doMov(2);
-                    final int idx = pair.left(), source = pair.right();
-                    regStorage.writeShort(idx, (short) source);
+                    final Transfer t = prepareMovTransfer(2);
+                    switch (t.cell()) {
+                        case RegisterCell(int registerId) -> regStorage.writeShort(registerId, (short) t.data());
+                        case null, default ->
+                                throw new UnsupportedOperationException("unsupported cell destination: %s".formatted(t.cell()));
+                    }
                 }
                 case MOVB -> {
-                    final Pair<Integer, Integer>  pair = doMov(1);
-                    final int idx = pair.left(), source = pair.right();
-                    regStorage.writeByte(idx, (byte) source);
+                    final Transfer t = prepareMovTransfer(1);
+                    switch (t.cell()) {
+                        case RegisterCell(int registerId) -> regStorage.writeByte(registerId, (byte) t.data());
+                        case null, default ->
+                                throw new UnsupportedOperationException("unsupported cell destination: %s".formatted(t.cell()));
+                    }
                 }
                 case Opcode.SYSCALL -> {
                     final int syscallId = regStorage.readEax();
                     sysCallTable.executeOn(this, syscallId);
                 }
-                case Opcode.NOP -> {}
+                case Opcode.NOP -> {
+                }
             }
         }
 
@@ -82,24 +101,33 @@ public final class CPU {
         return statusCode;
     }
 
-    Pair<Integer, Integer> doMov(final int size) {
+    Transfer prepareMovTransfer(int size) {
+        // first operand. (number | register)
         final OperandType type1 = OperandType.fromByte(readTextByte());
-        final int val1 = switch (size) {
-            case 1 -> readTextByte();
-            case 2 -> readTextShort();
-            case 4 -> readTextInt();
-            default -> throw new IllegalStateException("unexpected size: %d".formatted(size));
+        final int data = switch (type1) {
+            case NUMBER -> switch (size) {
+                case 1 -> readTextByte();
+                case 2 -> readTextShort();
+                case 4 -> readTextInt();
+                default -> throw new IllegalStateException("unexpected size: %d".formatted(size));
+            };
+            case REGISTER -> {
+                final int registerId = readTextByte();
+                yield switch (size) {
+                    case 4 -> regStorage.readInt(registerId);
+                    case 2 -> regStorage.readShort(registerId);
+                    case 1 -> regStorage.readByte(registerId);
+                    default -> throw new IllegalStateException("unexpected register size: %d".formatted(size));
+                };
+            }
         };
+
+        // second operand: register only
         final OperandType type2 = OperandType.fromByte(readTextByte());
-        final int regIdx = readTextByte();
+        final int dest = readTextByte();
 
-        final int source = switch (type1) {
-            case NUMBER -> val1;
-            case REGISTER -> regStorage.readInt(val1);
-        };
+        require(type2 == REGISTER, "mov. 2's operand must be register");
 
-        require(type2 == OperandType.REGISTER, "mov. 2's operand must be register");
-
-        return new Pair<>(regIdx, source);
+        return new Transfer(data, new RegisterCell(dest));
     }
 }

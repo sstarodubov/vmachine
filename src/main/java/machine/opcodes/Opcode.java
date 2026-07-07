@@ -1,6 +1,4 @@
-package machine;
-
-import machine.utils.Assertions;
+package machine.opcodes;
 
 import java.util.Arrays;
 import java.util.List;
