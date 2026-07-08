@@ -1,5 +1,8 @@
 package compiler;
 
+import compiler.mov.NumberOperand;
+import compiler.mov.Operand;
+import compiler.mov.RegisterOperand;
 import machine.opcodes.Opcode;
 import machine.OperandType;
 import machine.RegStorage;
@@ -110,7 +113,7 @@ public final class Asm {
     }
 
     private void compileMovOperands(final int operCount, final int operSize) {
-        switch (curToken.type()) {
+        final Operand firstOperand = switch (curToken.type()) {
             case PERCENT -> {
                 // case %reg, %reg
                 consume(TokenType.PERCENT);
@@ -121,16 +124,7 @@ public final class Asm {
                 appendToCodeBuff(sourceRegId, 1);
                 consume(TokenType.STRING);
 
-                consume(TokenType.COMMA);
-
-                consume(TokenType.PERCENT);
-                require(curToken.type() == TokenType.STRING, "after percent must be name of register, but: %s".formatted(curToken));
-                final int targetRegId = RegStorage.registerIdFromName(curToken.lexeme());
-                require(targetRegId != -1, "register id must be known");
-                require(RegStorage.isEq(sourceRegName, curToken.lexeme()), "incorrect register id '%d' used with `%d' size".formatted(targetRegId, operSize));
-                appendToCodeBuff(OperandType.REGISTER.code, 1);
-                appendToCodeBuff(targetRegId, 1);
-                consume(TokenType.STRING);
+                yield new RegisterOperand(sourceRegName);
             }
 
             case DOLLAR -> {
@@ -141,21 +135,31 @@ public final class Asm {
                 appendToCodeBuff(OperandType.NUMBER.code, 1);
                 appendToCodeBuff(num, operSize);
                 consume(TokenType.NUMBER);
-
-                consume(TokenType.COMMA);
-
-                consume(TokenType.PERCENT);
-                require(curToken.type() == TokenType.STRING, "after percent must be name of register, but: %s".formatted(curToken));
-                final int regId = RegStorage.registerIdFromName(curToken.lexeme());
-                require(regId != -1, "register id must be known");
-                require(RegStorage.isCompatibleSize(num, curToken.lexeme()), "register must have size %d".formatted(operSize));
-                require(RegStorage.isCompatibleMovSemantic(operSize, curToken.lexeme()), "incorrect register id '%d' used with `%d' size".formatted(regId, operSize));
-                appendToCodeBuff(OperandType.REGISTER.code, 1);
-                appendToCodeBuff(regId, 1);
-                consume(TokenType.STRING);
+                yield new NumberOperand(num);
             }
             default -> throw new IllegalStateException("unexpected mov operand: %s".formatted(curToken));
+        };
+
+        consume(TokenType.COMMA);
+
+        consume(TokenType.PERCENT);
+        require(curToken.type() == TokenType.STRING, "after percent must be name of register, but: %s".formatted(curToken));
+        final int targetRegId = RegStorage.registerIdFromName(curToken.lexeme());
+        switch (firstOperand) {
+            case NumberOperand(int num) -> {
+                require(RegStorage.isCompatibleSize(num, curToken.lexeme()), "register must have size %d".formatted(operSize));
+                require(RegStorage.isCompatibleMovSemantic(operSize, curToken.lexeme()), "incorrect register id '%d' used with `%d' size".formatted(targetRegId, operSize));
+            }
+            case RegisterOperand(String name) -> {
+                require(RegStorage.isEq(name, curToken.lexeme()), "incorrect register id '%d' used with `%d' size".formatted(targetRegId, operSize));
+            }
+            case null, default -> throw new UnsupportedOperationException("illegal mov operand");
         }
+
+        require(targetRegId != -1, "register id must be known");
+        appendToCodeBuff(OperandType.REGISTER.code, 1);
+        appendToCodeBuff(targetRegId, 1);
+        consume(TokenType.STRING);
     }
 
 
