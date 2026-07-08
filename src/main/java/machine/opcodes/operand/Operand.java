@@ -1,7 +1,9 @@
 package machine.opcodes.operand;
 
-public sealed interface Operand permits Register, Number {
+public sealed interface Operand permits Register, Number, RegisterWithValue{
 
-    int value();
+    default int value() {
+        throw new UnsupportedOperationException();
+    }
 
 }

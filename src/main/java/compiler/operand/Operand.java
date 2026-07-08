@@ -1,4 +1,4 @@
-package compiler.mov;
+package compiler.operand;
 
 public interface Operand {
 }

@@ -1,4 +1,5 @@
 package machine.opcodes.operand;
 
-public record Register(int registerId, int value) implements Operand {
+public record Register(int id) implements Operand {
+
 }

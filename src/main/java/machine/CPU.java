@@ -4,10 +4,10 @@ import machine.opcodes.Opcode;
 import machine.opcodes.operand.Number;
 import machine.opcodes.operand.Operand;
 import machine.opcodes.operand.Register;
+import machine.opcodes.operand.RegisterWithValue;
 
 import java.nio.ByteBuffer;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 
 import static machine.utils.Assertions.require;
 
@@ -70,17 +70,17 @@ public final class CPU {
             switch (curOpcode) {
                 case Opcode.MOVL -> {
                     final Transfer t = prepareMovTransfer(4);
-                    final int register = ((Register) t.to()).registerId();
+                    final int register = ((Register) t.to()).id();
                     regStorage.writeInt(register, t.from().value());
                 }
                 case MOVW -> {
                     final Transfer t = prepareMovTransfer(2);
-                    final int register = ((Register) t.to()).registerId();
+                    final int register = ((Register) t.to()).id();
                     regStorage.writeShort(register, (short) t.from().value());
                 }
                 case MOVB -> {
                     final Transfer t = prepareMovTransfer(1);
-                    final int register = ((Register) t.to()).registerId();
+                    final int register = ((Register) t.to()).id();
                     regStorage.writeByte(register, (byte) t.from().value());
                 }
                 case Opcode.SYSCALL -> {
@@ -93,7 +93,7 @@ public final class CPU {
                 case Opcode.ADDL ->  {
                     final Transfer t = prepareMathOpTransfer(4, Integer::sum);
                     final int data = t.from().value();
-                    final int register = ((Register) t.to()).registerId();
+                    final int register = ((RegisterWithValue) t.to()).id();
                     regStorage.writeInt(register, data);
                 }
             }
@@ -116,18 +116,18 @@ public final class CPU {
             case REGISTER -> {
                 final int registerId = readTextByte();
                 yield switch (size) {
-                    case 4 -> new Register(registerId, switch (mode) {
-                        case ONLY_ADDRESS -> 0;
-                        case READ_VALUE -> regStorage.readInt(registerId);
-                    });
-                    case 2 -> new Register(registerId, switch (mode) {
-                        case READ_VALUE -> regStorage.readShort(registerId);
-                        case ONLY_ADDRESS -> 0;
-                    });
-                    case 1 -> new Register(registerId, switch (mode) {
-                        case READ_VALUE -> regStorage.readByte(registerId);
-                        case ONLY_ADDRESS -> 0;
-                    });
+                    case 4 -> switch (mode) {
+                        case ONLY_ADDRESS -> new Register(registerId);
+                        case READ_VALUE -> new RegisterWithValue(registerId, regStorage.readInt(registerId));
+                    };
+                    case 2 -> switch (mode) {
+                        case READ_VALUE -> new RegisterWithValue(registerId, regStorage.readShort(registerId));
+                        case ONLY_ADDRESS -> new Register(registerId);
+                    };
+                    case 1 -> switch (mode) {
+                        case READ_VALUE -> new RegisterWithValue(registerId, regStorage.readByte(registerId));
+                        case ONLY_ADDRESS -> new Register(registerId);
+                    };
                     default -> throw new IllegalStateException("unexpected register size: %d".formatted(size));
                 };
             }
@@ -138,7 +138,7 @@ public final class CPU {
         final Operand first = readOperand(size, AccessMode.READ_VALUE);
         final Operand second = readOperand(size, AccessMode.READ_VALUE);
 
-        require(second instanceof Register, "addl. second operand must be register");
+        require(second instanceof RegisterWithValue, "addl. second operand must be register");
 
         final int sum = fn.apply(first.value(), second.value());
         return new Transfer(new Number(sum), second);
