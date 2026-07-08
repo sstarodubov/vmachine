@@ -52,9 +52,8 @@ public class Tokenizer {
                 pos++;
                 yield new Token(TokenType.EOL, "\n");
             }
-            case char letter when Character.isLetter(letter) || letter == '_' -> readString();
             case char num when Character.isDigit(num) -> readNum();
-            default -> throw new IllegalStateException("unknown symbol: %s".formatted(cur));
+            default -> readString();
         };
     }
 

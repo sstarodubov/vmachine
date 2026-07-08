@@ -1,20 +1,24 @@
 package machine;
 
 import machine.opcodes.Opcode;
-import machine.opcodes.Cell;
-import machine.opcodes.RegisterCell;
-import machine.utils.Pair;
+import machine.opcodes.operand.Number;
+import machine.opcodes.operand.Operand;
+import machine.opcodes.operand.Register;
 
 import java.nio.ByteBuffer;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
-import static machine.OperandType.REGISTER;
 import static machine.utils.Assertions.require;
 
 public final class CPU {
+    enum AccessMode {
+       ONLY_ADDRESS, READ_VALUE
+    }
 
     record Transfer(
-            int data, // что положить
-            Cell cell // в какую ячейку положить
+            Operand from, // откуда положить
+            Operand to // куда положить
     ) {
     }
 
@@ -66,68 +70,86 @@ public final class CPU {
             switch (curOpcode) {
                 case Opcode.MOVL -> {
                     final Transfer t = prepareMovTransfer(4);
-                    switch (t.cell()) {
-                        case RegisterCell(int registerId) -> regStorage.writeInt(registerId, t.data());
-                        case null, default ->
-                                throw new UnsupportedOperationException("unsupported cell destination: %s".formatted(t.cell()));
-                    }
+                    final int register = ((Register) t.to()).registerId();
+                    regStorage.writeInt(register, t.from().value());
                 }
                 case MOVW -> {
                     final Transfer t = prepareMovTransfer(2);
-                    switch (t.cell()) {
-                        case RegisterCell(int registerId) -> regStorage.writeShort(registerId, (short) t.data());
-                        case null, default ->
-                                throw new UnsupportedOperationException("unsupported cell destination: %s".formatted(t.cell()));
-                    }
+                    final int register = ((Register) t.to()).registerId();
+                    regStorage.writeShort(register, (short) t.from().value());
                 }
                 case MOVB -> {
                     final Transfer t = prepareMovTransfer(1);
-                    switch (t.cell()) {
-                        case RegisterCell(int registerId) -> regStorage.writeByte(registerId, (byte) t.data());
-                        case null, default ->
-                                throw new UnsupportedOperationException("unsupported cell destination: %s".formatted(t.cell()));
-                    }
+                    final int register = ((Register) t.to()).registerId();
+                    regStorage.writeByte(register, (byte) t.from().value());
                 }
                 case Opcode.SYSCALL -> {
                     final int syscallId = regStorage.readEax();
                     sysCallTable.executeOn(this, syscallId);
                 }
                 case Opcode.NOP -> {
+                    // skip
+                }
+                case Opcode.ADDL ->  {
+                    final Transfer t = prepareMathOpTransfer(4, Integer::sum);
+                    final int data = t.from().value();
+                    final int register = ((Register) t.to()).registerId();
+                    regStorage.writeInt(register, data);
                 }
             }
         }
 
-
         return statusCode;
     }
 
-    Transfer prepareMovTransfer(int size) {
+    Operand readOperand(final int size, final AccessMode mode) {
         // first operand. (number | register)
+        // get value
         final OperandType type1 = OperandType.fromByte(readTextByte());
-        final int data = switch (type1) {
+        return switch (type1) {
             case NUMBER -> switch (size) {
-                case 1 -> readTextByte();
-                case 2 -> readTextShort();
-                case 4 -> readTextInt();
+                case 1 -> new Number(readTextByte());
+                case 2 -> new Number(readTextShort());
+                case 4 -> new Number(readTextInt());
                 default -> throw new IllegalStateException("unexpected size: %d".formatted(size));
             };
             case REGISTER -> {
                 final int registerId = readTextByte();
                 yield switch (size) {
-                    case 4 -> regStorage.readInt(registerId);
-                    case 2 -> regStorage.readShort(registerId);
-                    case 1 -> regStorage.readByte(registerId);
+                    case 4 -> new Register(registerId, switch (mode) {
+                        case ONLY_ADDRESS -> 0;
+                        case READ_VALUE -> regStorage.readInt(registerId);
+                    });
+                    case 2 -> new Register(registerId, switch (mode) {
+                        case READ_VALUE -> regStorage.readShort(registerId);
+                        case ONLY_ADDRESS -> 0;
+                    });
+                    case 1 -> new Register(registerId, switch (mode) {
+                        case READ_VALUE -> regStorage.readByte(registerId);
+                        case ONLY_ADDRESS -> 0;
+                    });
                     default -> throw new IllegalStateException("unexpected register size: %d".formatted(size));
                 };
             }
         };
+    }
 
-        // second operand: register only
-        final OperandType type2 = OperandType.fromByte(readTextByte());
-        final int dest = readTextByte();
+    Transfer prepareMathOpTransfer(final int size, final BiFunction<Integer, Integer, Integer> fn) {
+        final Operand first = readOperand(size, AccessMode.READ_VALUE);
+        final Operand second = readOperand(size, AccessMode.READ_VALUE);
 
-        require(type2 == REGISTER, "mov. 2's operand must be register");
+        require(second instanceof Register, "addl. second operand must be register");
 
-        return new Transfer(data, new RegisterCell(dest));
+        final int sum = fn.apply(first.value(), second.value());
+        return new Transfer(new Number(sum), second);
+    }
+
+    Transfer prepareMovTransfer(final int size) {
+        final Operand first = readOperand(size, AccessMode.READ_VALUE);
+        final Operand second = readOperand(size, AccessMode.ONLY_ADDRESS);
+
+        require(second instanceof Register, "mov. 2's operand must be register");
+
+        return new Transfer(first, second);
     }
 }

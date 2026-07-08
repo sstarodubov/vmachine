@@ -112,7 +112,7 @@ public final class Asm {
         codePos += size;
     }
 
-    private void compileMovOperands(final int operCount, final int operSize) {
+    private void compileOperands2(final int operSize) {
         final Operand firstOperand = switch (curToken.type()) {
             case PERCENT -> {
                 // case %reg, %reg
@@ -150,9 +150,8 @@ public final class Asm {
                 require(RegStorage.isCompatibleSize(num, curToken.lexeme()), "register must have size %d".formatted(operSize));
                 require(RegStorage.isCompatibleMovSemantic(operSize, curToken.lexeme()), "incorrect register id '%d' used with `%d' size".formatted(targetRegId, operSize));
             }
-            case RegisterOperand(String name) -> {
+            case RegisterOperand(String name) ->
                 require(RegStorage.isEq(name, curToken.lexeme()), "incorrect register id '%d' used with `%d' size".formatted(targetRegId, operSize));
-            }
             case null, default -> throw new UnsupportedOperationException("illegal mov operand");
         }
 
@@ -168,7 +167,7 @@ public final class Asm {
             case MOVL -> {
                 appendToCodeBuff(Opcode.MOVL.code, 1);
                 consume(TokenType.STRING);
-                compileMovOperands(2, 4);
+                compileOperands2( 4);
             }
             case SYSCALL -> {
                 appendToCodeBuff(Opcode.SYSCALL.code, 1);
@@ -179,12 +178,17 @@ public final class Asm {
             case MOVW -> {
                 appendToCodeBuff(Opcode.MOVW.code, 1);
                 consume(TokenType.STRING);
-                compileMovOperands(2, 2);
+                compileOperands2( 2);
             }
             case MOVB -> {
                 appendToCodeBuff(Opcode.MOVB.code, 1);
                 consume(TokenType.STRING);
-                compileMovOperands(2, 1);
+                compileOperands2( 1);
+            }
+            case ADDL -> {
+                appendToCodeBuff(Opcode.ADDL.code, 1);
+                consume(TokenType.STRING);
+                compileOperands2(4);
             }
             case null -> {
                 // it is label
@@ -193,6 +197,7 @@ public final class Asm {
                 consume(TokenType.COLON);
                 labels.put(labelName, codePos);
             }
+
         }
     }
 

@@ -11,7 +11,8 @@ public enum Opcode {
     SYSCALL((byte) 0x1, "syscall"),
     MOVL((byte) 0x2, "movl"),
     MOVW((byte) 0x3, "movw"),
-    MOVB((byte) 0x4, "movb");
+    MOVB((byte) 0x4, "movb"),
+    ADDL((byte) 0x5,  "addl");
 
     public final byte code;
     public final String name;

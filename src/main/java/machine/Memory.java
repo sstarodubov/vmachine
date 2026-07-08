@@ -49,8 +49,8 @@ public final class Memory {
            0: address of main function
            4: text segment start
            8: text segment end
-           12: data segment start
-           16: data segment end
+           12: from segment start
+           16: from segment end
          */
         final int textSegmentStart = code.getInt(4);
         final int textSegmentEnd = code.getInt(8);

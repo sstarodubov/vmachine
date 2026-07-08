@@ -150,4 +150,49 @@ class AsmTest {
         cpu.run(code);
         assertEquals(1, cpu.regStorage.readEdx());
     }
+
+    @Test
+    void test7() {
+         /*
+                movl(2), NUMBER.code()(1), 0, 0, 0, 11, REGISTER.code()(2), Registers.ecx(4),
+                movl(2), NUMBER.code()(1), 0, 0, 0, 22, REGISTER.code()(2), Registers.edi(8),
+                addl(5), REGISTOR.code()(2), Registers.ecx(4), REGISTER.code()(2), Registers.edi(8),
+         */
+        final var program = """
+               .globl _start
+               
+               .section .text
+               _start:
+                   movl $11, %ecx  # ECX = 11
+                   movl $22, %edi  # EDI = 11
+                   addl %ecx, %edi # EDI = ECX + EDI = 11 + 22 = 33
+                """;
+
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+
+        cpu.run(code);
+        assertEquals(33, cpu.regStorage.readEdi());
+    }
+
+
+    @Test
+    void test8() {
+        final var program = """
+               .globl _start
+               
+               .section .text
+               _start:
+                   movl $11, %ecx
+                   addl $100, %ecx
+                """;
+
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+
+        cpu.run(code);
+        assertEquals(111, cpu.regStorage.readEcx());
+    }
 }
