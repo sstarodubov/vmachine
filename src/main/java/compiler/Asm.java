@@ -152,7 +152,6 @@ public final class Asm {
             }
             case Register(String name) ->
                 require(RegStorage.isEq(name, curToken.lexeme()), "incorrect register id '%d' used with `%d' size".formatted(targetRegId, operSize));
-            case null, default -> throw new UnsupportedOperationException("illegal mov operand");
         }
 
         require(targetRegId != -1, "register id must be known");
