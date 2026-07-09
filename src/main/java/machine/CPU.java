@@ -119,6 +119,7 @@ public final class CPU {
                             final int data = num.value();
                             final int id = ((Register) eax).id();
                             regStorage.writeInt(id, data);
+                            regStorage.writeInt(RegStorage.edx, 0);
                         }
                         case DoubleTransfer(SingleTransfer edx, SingleTransfer eax) -> {
                             final int edxVal = edx.from().value();
