@@ -12,7 +12,11 @@ public enum Opcode {
     MOVL((byte) 0x2, "movl"),
     MOVW((byte) 0x3, "movw"),
     MOVB((byte) 0x4, "movb"),
-    ADDL((byte) 0x5,  "addl");
+    ADDL((byte) 0x5,  "addl"),
+    SUBL((byte) 0x6,  "subl"),
+    INQL((byte) 0x7,  "incl"),
+    DECL((byte) 0x8,  "decl");
+
 
     public final byte code;
     public final String name;

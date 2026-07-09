@@ -195,4 +195,60 @@ class AsmTest {
         cpu.run(code);
         assertEquals(111, cpu.regStorage.readEcx());
     }
+
+    @Test
+    void test9() {
+        final var program = """
+        .globl _start
+        .section .text
+        _start:
+            movl $11, %ecx  # RCX = 11
+            movl $55, %edi  # RDI = 55
+            subl %ecx, %edi  # RDI = RDI - RCX= 55 - 11 = 44
+            
+            """;
+
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+
+        cpu.run(code);
+        assertEquals(44, cpu.regStorage.readEdi());
+    }
+
+    @Test
+    void test10() {
+        final var program = """
+                .globl _start
+                .section .text
+                _start:
+                    movl $4, %edi
+                    incl %edi   # RDI = RDI + 1= 4 + 1 = 5
+            """;
+
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+
+        cpu.run(code);
+        assertEquals(5, cpu.regStorage.readEdi());
+    }
+
+    @Test
+    void test11() {
+        final var program = """
+                .globl _start
+                .section .text
+                _start:
+                    movl $4, %edi
+                    decl %edi   # RDI = RDI + 1= 4 + 1 = 5
+            """;
+
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+
+        cpu.run(code);
+        assertEquals(3, cpu.regStorage.readEdi());
+    }
 }

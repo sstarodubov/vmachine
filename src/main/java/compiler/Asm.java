@@ -112,6 +112,19 @@ public final class Asm {
         codePos += size;
     }
 
+    private void compileOperands1(final int operSize) {
+        //case %reg
+        consume(TokenType.PERCENT);
+        require(curToken.type() == TokenType.STRING, "after percent must be name of register, but: %s".formatted(curToken));
+        final String sourceRegName = curToken.lexeme();
+        final int sourceRegId = RegStorage.registerIdFromName(sourceRegName);
+        require(RegStorage.isEq(sourceRegName, curToken.lexeme()), "incorrect register id '%d' used with `%d' size".formatted(sourceRegId, operSize));
+        require(RegStorage.getRegisterSize(sourceRegName) == operSize, "register must have size: %d".formatted(operSize));
+        appendToCodeBuff(OperandType.REGISTER.code, 1);
+        appendToCodeBuff(sourceRegId, 1);
+        consume(TokenType.STRING);
+    }
+
     private void compileOperands2(final int operSize) {
         final Operand firstOperand = switch (curToken.type()) {
             case PERCENT -> {
@@ -189,6 +202,11 @@ public final class Asm {
                 consume(TokenType.STRING);
                 compileOperands2(4);
             }
+            case SUBL -> {
+                appendToCodeBuff(Opcode.SUBL.code, 1);
+                consume(TokenType.STRING);
+                compileOperands2(4);
+            }
             case null -> {
                 // it is label
                 final var labelName = curToken.lexeme();
@@ -196,9 +214,19 @@ public final class Asm {
                 consume(TokenType.COLON);
                 labels.put(labelName, codePos);
             }
-
+            case INQL -> {
+                appendToCodeBuff(Opcode.INQL.code, 1);
+                consume(TokenType.STRING);
+                compileOperands1(4);
+            }
+            case DECL -> {
+                appendToCodeBuff(Opcode.DECL.code, 1);
+                consume(TokenType.STRING);
+                compileOperands1(4);
+            }
         }
     }
+
 
     private void compileDot() {
         consume(TokenType.DOT);

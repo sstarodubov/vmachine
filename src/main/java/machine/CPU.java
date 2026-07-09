@@ -8,6 +8,7 @@ import machine.opcodes.operand.RegisterWithValue;
 
 import java.nio.ByteBuffer;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import static machine.utils.Assertions.require;
 
@@ -96,10 +97,35 @@ public final class CPU {
                     final int register = ((RegisterWithValue) t.to()).id();
                     regStorage.writeInt(register, data);
                 }
+                case Opcode.SUBL -> {
+                    final Transfer t = prepareMathOpTransfer(4, (a , b) -> b - a);
+                    final int data = t.from().value();
+                    final int register = ((RegisterWithValue) t.to()).id();
+                    regStorage.writeInt(register, data);
+                }
+                case Opcode.INQL -> {
+                    final Transfer t = prepareIncrementTransfer(4, a -> a + 1);
+                    final int data = t.from().value();
+                    final int register = ((RegisterWithValue) t.to()).id();
+                    regStorage.writeInt(register, data);
+                }
+                case Opcode.DECL -> {
+                    final Transfer t = prepareIncrementTransfer(4, a -> a - 1);
+                    final int data = t.from().value();
+                    final int register = ((RegisterWithValue) t.to()).id();
+                    regStorage.writeInt(register, data);
+                }
             }
         }
 
         return statusCode;
+    }
+
+    private Transfer prepareIncrementTransfer(final int size, final Function<Integer,Integer> fn) {
+        final Operand operand = readOperand(size, AccessMode.READ_VALUE);
+        final int result = fn.apply(operand.value());
+        require(operand instanceof RegisterWithValue, "must be register with value");
+        return new Transfer(new Number(result), operand);
     }
 
     Operand readOperand(final int size, final AccessMode mode) {
@@ -140,8 +166,8 @@ public final class CPU {
 
         require(second instanceof RegisterWithValue, "addl. second operand must be register");
 
-        final int sum = fn.apply(first.value(), second.value());
-        return new Transfer(new Number(sum), second);
+        final int result = fn.apply(first.value(), second.value());
+        return new Transfer(new Number(result), second);
     }
 
     Transfer prepareMovTransfer(final int size) {
