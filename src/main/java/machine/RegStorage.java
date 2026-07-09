@@ -7,7 +7,7 @@ public final class RegStorage {
     private final ByteBuffer mem;
 
     public RegStorage() {
-        this.mem = ByteBuffer.allocate(/*registers*/9 * /*size of reg*/4);
+        this.mem = ByteBuffer.allocate(128);
     }
 
     public RegStorage(ByteBuffer byteBuffer) {
@@ -28,6 +28,12 @@ public final class RegStorage {
     public static final int edi = 28; //(Destination index): указатель на место назначения в операциях с массивами
     public static final int eip = 32; // указатель адреса следующей инструкции для выполнения
 
+    //flags
+    public static final int cf = 36;
+    public static final int of = 37;
+
+
+
     public static int registerIdFromName(final String regName) {
         return switch (regName) {
             case "eax" -> 0;
@@ -44,7 +50,34 @@ public final class RegStorage {
             default -> -1;
         };
     }
+    // flags
+    public boolean readCF() {
+        return mem.get(cf) == 1;
+    }
 
+    public boolean readOF() {
+        return mem.get(of) == 1;
+    }
+
+    public void setCF() {
+        mem.put(cf, (byte) 1);
+    }
+
+    public void setOF() {
+        mem.put(of, (byte) 1);
+    }
+
+    public void clearCF() {
+        mem.put(cf, (byte) 0);
+    }
+
+    public void clearOF() {
+        mem.put(of, (byte) 0);
+    }
+
+
+
+    // utils
     public static boolean isEq(final String reg1, final String reg2) {
         return RegStorage.getRegisterSize(reg2) == RegStorage.getRegisterSize(reg1);
     }
@@ -71,6 +104,8 @@ public final class RegStorage {
         };
     }
 
+
+    //registers
     // eip
     public int readEip() {
         return readInt(eip);

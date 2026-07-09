@@ -1,8 +1,13 @@
 package compiler;
 
+import java.util.List;
+
 public class Tokenizer {
     private final String input;
     int pos;
+    private final List<Character> hexChars = List.of(
+            'a', 'b', 'c', 'd', 'e', 'f'
+    );
 
     public Tokenizer(String input) {
         this.input = input;
@@ -66,7 +71,8 @@ public class Tokenizer {
         if (input.charAt(pos) == 'x') {
             do {
                 lexeme.append(input.charAt(pos++));
-            } while (pos < input.length() && Character.isDigit(input.charAt(pos)));
+            } while (pos < input.length() &&
+                    (Character.isDigit(input.charAt(pos)) || hexChars.contains(Character.toLowerCase(input.charAt(pos)))));
         }
         return new Token(TokenType.NUMBER, lexeme.toString());
     }

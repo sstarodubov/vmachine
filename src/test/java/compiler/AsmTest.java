@@ -251,4 +251,74 @@ class AsmTest {
         cpu.run(code);
         assertEquals(3, cpu.regStorage.readEdi());
     }
+
+
+    @Test
+    void test12() {
+        final var program = """
+              .globl _start
+              .section .text
+              _start:
+                  movl $2, %edi
+                  movl $4, %eax
+                  mull %edi           # EAX = EAX * EDI
+            """;
+
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+
+        cpu.run(code);
+        assertEquals(8, cpu.regStorage.readEax());
+    }
+
+    @Test
+    void test14() {
+        //EDX:EAX = EAX × operand32
+        final var program = """
+              .globl _start
+              .section .text
+              _start:
+                  movl $2147483647, %edi
+                  movl $4, %eax
+                  mull %edi           # EAX = EAX * EDI
+            """;
+
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+
+        cpu.run(code);
+
+        final var result = ByteBuffer.allocate(8);
+        result.putInt(cpu.regStorage.readEdx());
+        result.putInt(4, cpu.regStorage.readEax());
+        assertEquals((long) Integer.MAX_VALUE * 4, result.getLong(0));
+    }
+
+
+
+    @Test
+    void test15() {
+        //EDX:EAX = EAX × operand32
+        final var program = """
+              .globl _start
+              .section .text
+              _start:
+                  movl $0x7fffffff, %edi
+                  movl $4, %eax
+                  mull %edi           # EAX = EAX * EDI
+            """;
+
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+
+        cpu.run(code);
+
+        final var result = ByteBuffer.allocate(8);
+        result.putInt(cpu.regStorage.readEdx());
+        result.putInt(4, cpu.regStorage.readEax());
+        assertEquals((long) Integer.MAX_VALUE * 4, result.getLong(0));
+    }
 }
