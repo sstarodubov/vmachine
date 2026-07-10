@@ -114,15 +114,20 @@ public final class Asm {
 
     private void compileOperands1(final int operSize) {
         //case %reg
-        consume(TokenType.PERCENT);
-        require(curToken.type() == TokenType.STRING, "after percent must be name of register, but: %s".formatted(curToken));
-        final String sourceRegName = curToken.lexeme();
-        final int sourceRegId = RegStorage.registerIdFromName(sourceRegName);
-        require(RegStorage.isEq(sourceRegName, curToken.lexeme()), "incorrect register id '%d' used with `%d' size".formatted(sourceRegId, operSize));
-        require(RegStorage.getRegisterSize(sourceRegName) == operSize, "register must have size: %d".formatted(operSize));
-        appendToCodeBuff(OperandType.REGISTER.code, 1);
-        appendToCodeBuff(sourceRegId, 1);
-        consume(TokenType.STRING);
+        switch (curToken.type()) {
+            case PERCENT ->  {
+                consume(TokenType.PERCENT);
+                require(curToken.type() == TokenType.STRING, "after percent must be name of register, but: %s".formatted(curToken));
+                final String sourceRegName = curToken.lexeme();
+                final int sourceRegId = RegStorage.registerIdFromName(sourceRegName);
+                require(RegStorage.isEq(sourceRegName, curToken.lexeme()), "incorrect register id '%d' used with `%d' size".formatted(sourceRegId, operSize));
+                require(RegStorage.getRegisterSize(sourceRegName) == operSize, "register must have size: %d".formatted(operSize));
+                appendToCodeBuff(OperandType.REGISTER.code, 1);
+                appendToCodeBuff(sourceRegId, 1);
+                consume(TokenType.STRING);
+            }
+            default -> throw new IllegalStateException("Unexpected token value " + curToken.type());
+        }
     }
 
     private void compileOperands2(final int operSize) {
@@ -230,6 +235,9 @@ public final class Asm {
                 compileOperands1(4);
             }
             case JMP -> {
+                appendToCodeBuff(Opcode.JMP.code, 1);
+                consume(TokenType.STRING);
+                compileOperands1(4);
             }
         }
     }

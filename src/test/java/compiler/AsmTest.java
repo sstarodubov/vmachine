@@ -320,7 +320,7 @@ class AsmTest {
         assertEquals((long) Integer.MAX_VALUE * 4, result.getLong(0));
     }
 
-   // @Test
+    @Test
     void test16() {
         //EDX:EAX = EAX × operand32
         final var program = """
