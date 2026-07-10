@@ -1,8 +1,7 @@
 package compiler;
 
+import compiler.operand.*;
 import compiler.operand.Number;
-import compiler.operand.Operand;
-import compiler.operand.Register;
 import machine.opcodes.Opcode;
 import machine.OperandType;
 import machine.RegStorage;
@@ -120,10 +119,10 @@ public final class Asm {
         codePos += size;
     }
 
-    private void compileOperands1(final int operSize) {
-        //case %reg
-        switch (curToken.type()) {
+    private Operand compileOperands1(final int operSize) {
+        return switch (curToken.type()) {
             case PERCENT ->  {
+                //case %reg
                 consume(TokenType.PERCENT);
                 require(curToken.type() == TokenType.STRING, "after percent must be name of register, but: %s".formatted(curToken));
                 final String sourceRegName = curToken.lexeme();
@@ -133,44 +132,15 @@ public final class Asm {
                 appendToCodeBuff(OperandType.REGISTER.code, 1);
                 appendToCodeBuff(sourceRegId, 1);
                 consume(TokenType.STRING);
+                yield new Register(sourceRegName, sourceRegId);
             }
             case POINTER -> {
                 consume(TokenType.POINTER);
                 compileOperands1(operSize);
+                yield new Pointer();
             }
-            case STRING -> { //label
-                appendToCodeBuff(OperandType.NUMBER.code, 1); // указываем что это direct
-                storeLabelPlace(curToken.lexeme(), codePos); //сохраняем место куда потом нужно будет проставить физический адресс метки
-                appendToCodeBuff(-1, 4); // это место пока заполянем числом -1
-                consume(TokenType.STRING);
-            }
-            default -> throw new IllegalStateException("Unexpected token value " + curToken.type());
-        }
-    }
-
-    private void storeLabelPlace(final String label, final int idx) {
-       final var list = labelsPlaces.getOrDefault(label, new ArrayList<>());
-       list.add(idx);
-       labelsPlaces.put(label, list);
-    }
-
-    private void compileOperands2(final int operSize) {
-        final Operand firstOperand = switch (curToken.type()) {
-            case PERCENT -> {
-                // case %reg, %reg
-                consume(TokenType.PERCENT);
-                require(curToken.type() == TokenType.STRING, "after percent must be name of register, but: %s".formatted(curToken));
-                final String sourceRegName = curToken.lexeme();
-                final int sourceRegId = RegStorage.registerIdFromName(sourceRegName);
-                appendToCodeBuff(OperandType.REGISTER.code, 1);
-                appendToCodeBuff(sourceRegId, 1);
-                consume(TokenType.STRING);
-
-                yield new Register(sourceRegName);
-            }
-
             case DOLLAR -> {
-                // case $num, %reg
+                // $number
                 consume(TokenType.DOLLAR);
                 require(curToken.type() == TokenType.NUMBER, "after $ must be int, but %s".formatted(curToken));
                 final int num = IntegerUtils.parseInt(curToken.lexeme());
@@ -179,27 +149,44 @@ public final class Asm {
                 consume(TokenType.NUMBER);
                 yield new Number(num);
             }
-            default -> throw new IllegalStateException("unexpected mov operand: %s".formatted(curToken));
+            case STRING -> {
+                //label
+                appendToCodeBuff(OperandType.NUMBER.code, 1); // указываем что это direct
+                addLabelPlace(curToken.lexeme(), codePos); //сохраняем место куда потом нужно будет проставить физический адресс метки
+                appendToCodeBuff(-1, 4); // это место пока заполянем числом -1
+                consume(TokenType.STRING);
+                yield new Label();
+            }
+            default -> throw new IllegalStateException("Unexpected token value " + curToken.type());
         };
+    }
+
+    private void addLabelPlace(final String label, final int idx) {
+       final var list = labelsPlaces.getOrDefault(label, new ArrayList<>());
+       list.add(idx);
+       labelsPlaces.put(label, list);
+    }
+
+    private void compileOperands2(final int operSize) {
+        final Operand firstOperand = compileOperands1(operSize);
+        require(firstOperand instanceof Number || firstOperand instanceof Register,
+                "first operand must be num or register");
 
         consume(TokenType.COMMA);
 
-        consume(TokenType.PERCENT);
-        require(curToken.type() == TokenType.STRING, "after percent must be name of register, but: %s".formatted(curToken));
-        final int targetRegId = RegStorage.registerIdFromName(curToken.lexeme());
+        final Register secondRegister = (Register) compileOperands1(operSize);
         switch (firstOperand) {
             case Number(int num) -> {
-                require(RegStorage.isCompatibleSize(num, curToken.lexeme()), "register must have size %d".formatted(operSize));
-                require(RegStorage.isCompatibleMovSemantic(operSize, curToken.lexeme()), "incorrect register id '%d' used with `%d' size".formatted(targetRegId, operSize));
+                require(RegStorage.isCompatibleSize(num, secondRegister.name()),
+                        "register must have size %d".formatted(operSize));
+                require(RegStorage.isCompatibleMovSemantic(operSize, secondRegister.name()),
+                        "incorrect register id '%d' used with `%d' size".formatted(secondRegister.id(), operSize));
             }
-            case Register(String name) ->
-                require(RegStorage.isEq(name, curToken.lexeme()), "incorrect register id '%d' used with `%d' size".formatted(targetRegId, operSize));
+            case Register(String name, int id) ->
+                require(RegStorage.isEq(name, secondRegister.name()),
+                        "incorrect register id '%d' used with `%d' size".formatted(secondRegister.id(), operSize));
+            default -> throw new IllegalStateException("Unexpected value: " + firstOperand);
         }
-
-        require(targetRegId != -1, "register id must be known");
-        appendToCodeBuff(OperandType.REGISTER.code, 1);
-        appendToCodeBuff(targetRegId, 1);
-        consume(TokenType.STRING);
     }
 
 

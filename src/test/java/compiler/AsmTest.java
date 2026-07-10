@@ -322,7 +322,6 @@ class AsmTest {
 
     @Test
     void test16() {
-        //EDX:EAX = EAX × operand32
         final var program = """
                .globl _start
                .section .text
