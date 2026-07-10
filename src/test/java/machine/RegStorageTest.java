@@ -84,43 +84,8 @@ class RegStorageTest {
     }
 
     @Test
-    void test2() {
-        Assertions.assertEquals(772, regStorage.readAx());
-    }
-
-    @Test
-    void test3() {
-        Assertions.assertEquals(3, regStorage.readAh());
-    }
-
-    @Test
-    void test4() {
-        Assertions.assertEquals(4, regStorage.readAl());
-    }
-
-    @Test
     void test5() {
         regStorage.writeEax(10);
         Assertions.assertEquals(10, regStorage.readEax());
     }
-
-    @Test
-    void test6() {
-        regStorage.writeAx((short) 10);
-        Assertions.assertEquals(10, regStorage.readAx());
-    }
-
-    @Test
-    void test7() {
-        regStorage.writeAh((byte) 10);
-        Assertions.assertEquals(10, regStorage.readAh());
-    }
-
-
-    @Test
-    void test8() {
-        regStorage.writeAl((byte) 10);
-        Assertions.assertEquals(10, regStorage.readAl());
-    }
-
 }

@@ -62,19 +62,9 @@ public final class CPU {
             require(curOpcode != null, "unknown opcode: %d".formatted(curByte));
             switch (curOpcode) {
                 case Opcode.MOVL -> {
-                    final SingleTransfer t = prepareMovTransfer(4);
+                    final SingleTransfer t = prepareMovTransfer();
                     final int register = ((Register) t.to()).id();
-                    regStorage.writeInt(register, resolve(t.from(), 4));
-                }
-                case Opcode.MOVW -> {
-                    final SingleTransfer t = prepareMovTransfer(2);
-                    final int register = ((Register) t.to()).id();
-                    regStorage.writeShort(register, (short) resolve(t.from(), 2));
-                }
-                case Opcode.MOVB -> {
-                    final SingleTransfer t = prepareMovTransfer(1);
-                    final int register = ((Register) t.to()).id();
-                    regStorage.writeByte(register, (byte) resolve(t.from(), 1));
+                    regStorage.writeInt(register, resolve(t.from()));
                 }
                 case Opcode.SYSCALL -> {
                     final int syscallId = regStorage.readEax();
@@ -84,26 +74,26 @@ public final class CPU {
                     // skip
                 }
                 case Opcode.ADDL -> {
-                    final SingleTransfer t = prepareMathOpTransfer(4, Integer::sum);
-                    final int data = resolve(t.from(), 4);
+                    final SingleTransfer t = prepareMathOpTransfer(Integer::sum);
+                    final int data = resolve(t.from());
                     final int register = ((Register) t.to()).id();
                     regStorage.writeInt(register, data);
                 }
                 case Opcode.SUBL -> {
-                    final SingleTransfer t = prepareMathOpTransfer(4, (a, b) -> b - a);
-                    final int data = resolve(t.from(), 4);
+                    final SingleTransfer t = prepareMathOpTransfer((a, b) -> b - a);
+                    final int data = resolve(t.from());
                     final int register = ((Register) t.to()).id();
                     regStorage.writeInt(register, data);
                 }
                 case Opcode.INQL -> {
-                    final SingleTransfer t = prepareIncrementTransfer(4, a -> a + 1);
-                    final int data = resolve(t.from(), 4);
+                    final SingleTransfer t = prepareIncrementTransfer(a -> a + 1);
+                    final int data = resolve(t.from());
                     final int register = ((Register) t.to()).id();
                     regStorage.writeInt(register, data);
                 }
                 case Opcode.DECL -> {
-                    final SingleTransfer t = prepareIncrementTransfer(4, a -> a - 1);
-                    final int data = resolve(t.from(), 4);
+                    final SingleTransfer t = prepareIncrementTransfer( a -> a - 1);
+                    final int data = resolve(t.from());
                     final int register = ((Register) t.to()).id();
                     regStorage.writeInt(register, data);
                 }
@@ -111,24 +101,24 @@ public final class CPU {
                     final Transfer t = prepareMullTransfer();
                     switch (t) {
                         case SingleTransfer(Operand num, Operand eax) -> {
-                            final int data = resolve(num, 4);
+                            final int data = resolve(num);
                             final int id = ((Register) eax).id();
                             regStorage.writeInt(id, data);
                             regStorage.writeInt(RegStorage.edx, 0);
                         }
                         case DoubleTransfer(SingleTransfer edx, SingleTransfer eax) -> {
-                            final int edxVal = resolve(edx.from(), 4);
+                            final int edxVal = resolve(edx.from());
                             final int edxId = ((Register) edx.to()).id();
                             regStorage.writeInt(edxId, edxVal);
 
-                            final int eaxVal = resolve(eax.from(), 4);
+                            final int eaxVal = resolve(eax.from());
                             final int eaxId = ((Register) eax.to()).id();
                             regStorage.writeInt(eaxId, eaxVal);
                         }
                     }
                 }
                 case JMP -> {
-                     final Operand operand = readOperand(4);
+                     final Operand operand = readOperand();
                      switch (operand) {
                          case Number(int address) -> regStorage.writeEip(address);
                          default -> throw new UnsupportedOperationException("jmp. unknown operand: %s".formatted(operand));
@@ -140,25 +130,20 @@ public final class CPU {
         return statusCode;
     }
 
-    private int resolve(final Operand op, final int size) {
+    private int resolve(final Operand op) {
        return switch (op) {
            case Number(int num) -> num;
-           case Pointer(Operand p) -> resolve(p, size);
-           case Register(int id) -> switch (size) {
-               case 4 -> regStorage.readInt(id);
-               case 2 -> regStorage.readShort(id);
-               case 1 -> regStorage.readByte(id);
-               default -> throw new UnsupportedOperationException("unknown size: %d".formatted(size));
-           };
+           case Pointer(Operand p) -> resolve(p);
+           case Register(int id) -> regStorage.readInt(id);
        };
     }
 
     private Transfer prepareMullTransfer() {
         //EDX:EAX = EAX × operand32
         final long firstVal = regStorage.readInt(RegStorage.eax);
-        final Operand operand = readOperand(4);
+        final Operand operand = readOperand();
         require(operand instanceof Register, "must be register");
-        final long secondVal = resolve(operand, 4);
+        final long secondVal = resolve(operand);
         final long result = secondVal * firstVal;
 
         if (result > Integer.MAX_VALUE || result < Integer.MIN_VALUE) {
@@ -183,42 +168,37 @@ public final class CPU {
         );
     }
 
-    private SingleTransfer prepareIncrementTransfer(final int size, final Function<Integer, Integer> fn) {
-        final Operand operand = readOperand(size);
-        final int result = fn.apply(resolve(operand, size));
+    private SingleTransfer prepareIncrementTransfer(final Function<Integer, Integer> fn) {
+        final Operand operand = readOperand();
+        final int result = fn.apply(resolve(operand));
         require(operand instanceof Register, "must be register with value");
         return new SingleTransfer(new Number(result), operand);
     }
 
-    Operand readOperand(final int size) {
+    Operand readOperand() {
         // first operand. (number | register)
         // get value
         final OperandType type1 = OperandType.fromByte(readTextByte());
         return switch (type1) {
-            case NUMBER -> switch (size) {
-                case 1 -> new Number(readTextByte());
-                case 2 -> new Number(readTextShort());
-                case 4 -> new Number(readTextInt());
-                default -> throw new IllegalStateException("unexpected size: %d".formatted(size));
-            };
+            case NUMBER -> new Number(readTextInt());
             case REGISTER -> new Register(readTextByte());
-            case POINTER -> new Pointer(readOperand(size));
+            case POINTER -> new Pointer(readOperand());
         };
     }
 
-    SingleTransfer prepareMathOpTransfer(final int size, final BiFunction<Integer, Integer, Integer> fn) {
-        final Operand first = readOperand(size);
-        final Operand second = readOperand(size);
+    SingleTransfer prepareMathOpTransfer(final BiFunction<Integer, Integer, Integer> fn) {
+        final Operand first = readOperand();
+        final Operand second = readOperand();
 
         require(second instanceof Register, "addl. second operand must be register");
 
-        final int result = fn.apply(resolve(first, 4), resolve(second, 4));
+        final int result = fn.apply(resolve(first), resolve(second));
         return new SingleTransfer(new Number(result), second);
     }
 
-    SingleTransfer prepareMovTransfer(final int size) {
-        final Operand first = readOperand(size);
-        final Operand second = readOperand(size);
+    SingleTransfer prepareMovTransfer() {
+        final Operand first = readOperand();
+        final Operand second = readOperand();
 
         require(second instanceof Register, "mov. 2's operand must be register");
 

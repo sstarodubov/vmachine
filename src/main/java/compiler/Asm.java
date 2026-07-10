@@ -24,7 +24,7 @@ public final class Asm {
     private final ByteBuffer codeBuff;
     private final List<String> globals = new ArrayList<>();
     private final Map<String, Integer> labelsToAddress = new HashMap<>();
-    private final Map<String, List<Integer>> labelsPlaces = new HashMap<>();
+    private final Map<String, List<Integer>> labelsPosition = new HashMap<>();
 
     int codePos = 32  /*32 bytes for header*/;
     int textSegStart = -1;
@@ -66,9 +66,9 @@ public final class Asm {
         fillHeader();
 
         // проставляем реальные адреса вместо меток
-        for (final var entry : labelsPlaces.entrySet()) {
-            for (final int idx : entry.getValue()) {
-                 codeBuff.putInt(idx, labelsToAddress.get(entry.getKey()));
+        for (final var entry : labelsPosition.entrySet()) {
+            for (final int position : entry.getValue()) {
+                 codeBuff.putInt(position, labelsToAddress.get(entry.getKey()));
             }
         }
     }
@@ -87,26 +87,21 @@ public final class Asm {
         final String mainFn = globals.getFirst();
         final Integer addrMainFn = labelsToAddress.get(mainFn);
         require(addrMainFn != null, "address of main function must exists");
-        writeToCodeBuff(0, addrMainFn, 4);
+        writeToCodeBuff(0, addrMainFn);
 
         // text segment
-        writeToCodeBuff(4, textSegStart, 4);
-        writeToCodeBuff(8, textSegEnd, 4);
+        writeToCodeBuff(4, textSegStart);
+        writeToCodeBuff(8, textSegEnd);
 
         // data segment
-        writeToCodeBuff(12, dataSegStart, 4);
-        writeToCodeBuff(16, dataSegEnd, 4);
+        writeToCodeBuff(12, dataSegStart);
+        writeToCodeBuff(16, dataSegEnd);
 
         codeBuff.limit(codePos);
     }
 
-    private void writeToCodeBuff(final int pos, final int data, final int size) {
-        switch (size) {
-            case 4 -> codeBuff.putInt(pos, data);
-            case 2 -> codeBuff.putShort(pos, (short) data);
-            case 1 -> codeBuff.put(pos, (byte) data);
-            default -> throw new IllegalStateException("unsupported num size: %d".formatted(size));
-        }
+    private void writeToCodeBuff(final int pos, final int data) {
+            codeBuff.putInt(pos, data);
     }
 
     private void appendToCodeBuff(int num, int size) {
@@ -119,7 +114,7 @@ public final class Asm {
         codePos += size;
     }
 
-    private Operand compileOperands1(final int operSize) {
+    private Operand compileOperands1() {
         return switch (curToken.type()) {
             case PERCENT ->  {
                 //case %reg
@@ -127,8 +122,6 @@ public final class Asm {
                 require(curToken.type() == TokenType.STRING, "after percent must be name of register, but: %s".formatted(curToken));
                 final String sourceRegName = curToken.lexeme();
                 final int sourceRegId = RegStorage.registerIdFromName(sourceRegName);
-                require(RegStorage.isEq(sourceRegName, curToken.lexeme()), "incorrect register id '%d' used with `%d' size".formatted(sourceRegId, operSize));
-                require(RegStorage.getRegisterSize(sourceRegName) == operSize, "register must have size: %d".formatted(operSize));
                 appendToCodeBuff(OperandType.REGISTER.code, 1);
                 appendToCodeBuff(sourceRegId, 1);
                 consume(TokenType.STRING);
@@ -136,7 +129,7 @@ public final class Asm {
             }
             case POINTER -> {
                 consume(TokenType.POINTER);
-                compileOperands1(operSize);
+                compileOperands1();
                 yield new Pointer();
             }
             case DOLLAR -> {
@@ -145,14 +138,14 @@ public final class Asm {
                 require(curToken.type() == TokenType.NUMBER, "after $ must be int, but %s".formatted(curToken));
                 final int num = IntegerUtils.parseInt(curToken.lexeme());
                 appendToCodeBuff(OperandType.NUMBER.code, 1);
-                appendToCodeBuff(num, operSize);
+                appendToCodeBuff(num, 4);
                 consume(TokenType.NUMBER);
                 yield new Number(num);
             }
             case STRING -> {
                 //label
                 appendToCodeBuff(OperandType.NUMBER.code, 1); // указываем что это direct
-                addLabelPlace(curToken.lexeme(), codePos); //сохраняем место куда потом нужно будет проставить физический адресс метки
+                addLabelPosToFillLater(curToken.lexeme(), codePos); //сохраняем место куда потом нужно будет проставить физический адресс метки
                 appendToCodeBuff(-1, 4); // это место пока заполянем числом -1
                 consume(TokenType.STRING);
                 yield new Label();
@@ -161,32 +154,21 @@ public final class Asm {
         };
     }
 
-    private void addLabelPlace(final String label, final int idx) {
-       final var list = labelsPlaces.getOrDefault(label, new ArrayList<>());
+    private void addLabelPosToFillLater(final String label, final int idx) {
+       final var list = labelsPosition.getOrDefault(label, new ArrayList<>());
        list.add(idx);
-       labelsPlaces.put(label, list);
+       labelsPosition.put(label, list);
     }
 
-    private void compileOperands2(final int operSize) {
-        final Operand firstOperand = compileOperands1(operSize);
+    private void compileOperands2() {
+        final Operand firstOperand = compileOperands1();
         require(firstOperand instanceof Number || firstOperand instanceof Register,
                 "first operand must be num or register");
 
         consume(TokenType.COMMA);
 
-        final Register secondRegister = (Register) compileOperands1(operSize);
-        switch (firstOperand) {
-            case Number(int num) -> {
-                require(RegStorage.isCompatibleSize(num, secondRegister.name()),
-                        "register must have size %d".formatted(operSize));
-                require(RegStorage.isCompatibleMovSemantic(operSize, secondRegister.name()),
-                        "incorrect register id '%d' used with `%d' size".formatted(secondRegister.id(), operSize));
-            }
-            case Register(String name, int id) ->
-                require(RegStorage.isEq(name, secondRegister.name()),
-                        "incorrect register id '%d' used with `%d' size".formatted(secondRegister.id(), operSize));
-            default -> throw new IllegalStateException("Unexpected value: " + firstOperand);
-        }
+        final Operand second = compileOperands1();
+        require(second instanceof Register, "second operator must be register");
     }
 
 
@@ -195,7 +177,7 @@ public final class Asm {
             case MOVL -> {
                 appendToCodeBuff(Opcode.MOVL.code, 1);
                 consume(TokenType.STRING);
-                compileOperands2( 4);
+                compileOperands2();
             }
             case SYSCALL -> {
                 appendToCodeBuff(Opcode.SYSCALL.code, 1);
@@ -203,25 +185,15 @@ public final class Asm {
             }
             case NOP -> {
             }
-            case MOVW -> {
-                appendToCodeBuff(Opcode.MOVW.code, 1);
-                consume(TokenType.STRING);
-                compileOperands2( 2);
-            }
-            case MOVB -> {
-                appendToCodeBuff(Opcode.MOVB.code, 1);
-                consume(TokenType.STRING);
-                compileOperands2( 1);
-            }
             case ADDL -> {
                 appendToCodeBuff(Opcode.ADDL.code, 1);
                 consume(TokenType.STRING);
-                compileOperands2(4);
+                compileOperands2();
             }
             case SUBL -> {
                 appendToCodeBuff(Opcode.SUBL.code, 1);
                 consume(TokenType.STRING);
-                compileOperands2(4);
+                compileOperands2();
             }
             case null -> {
                 // it is label
@@ -233,22 +205,22 @@ public final class Asm {
             case INQL -> {
                 appendToCodeBuff(Opcode.INQL.code, 1);
                 consume(TokenType.STRING);
-                compileOperands1(4);
+                compileOperands1();
             }
             case DECL -> {
                 appendToCodeBuff(Opcode.DECL.code, 1);
                 consume(TokenType.STRING);
-                compileOperands1(4);
+                compileOperands1();
             }
             case MULL -> {
                 appendToCodeBuff(Opcode.MULL.code, 1);
                 consume(TokenType.STRING);
-                compileOperands1(4);
+                compileOperands1();
             }
             case JMP -> {
                 appendToCodeBuff(Opcode.JMP.code, 1);
                 consume(TokenType.STRING);
-                compileOperands1(4);
+                compileOperands1();
             }
         }
     }

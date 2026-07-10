@@ -15,10 +15,6 @@ public final class RegStorage {
     }
 
     public static final int eax = 0; // (Accumulator): для арифметических операций
-    public static final int ax = 2;
-    public static final int ah = 2;
-    public static final int al = 3;
-
     public static final int ecx = 4; //(Counter): для хранения счетчика цикла
     public static final int edx = 8; // (Data): для арифметических операций и операций ввода-вывода
     public static final int ebx = 12; //(Base): указатель на данные
@@ -182,32 +178,8 @@ public final class RegStorage {
         return readInt(eax);
     }
 
-    public short readAx() {
-        return readShort(ax);
-    }
-
-    public byte readAh() {
-        return readByte(ah);
-    }
-
-    public byte readAl() {
-        return readByte(al);
-    }
-
     public void writeEax(int val) {
         writeInt(eax, val);
-    }
-
-    public void writeAx(short val) {
-        writeShort(ax, val);
-    }
-
-    public void writeAh(byte val) {
-        writeByte(ah, val);
-    }
-
-    public void writeAl(byte val) {
-        writeByte(al, val);
     }
 
     //ecx
