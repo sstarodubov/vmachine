@@ -2,7 +2,8 @@ package machine;
 
 public enum OperandType {
 
-    NUMBER((byte) 0x1), REGISTER((byte) 0x2);//, MEMORY((byte) 0x3);
+    NUMBER((byte) 0x1), REGISTER((byte) 0x2), POINTER((byte) 0x3);
+
 
     public final byte code;
 
@@ -15,6 +16,7 @@ public enum OperandType {
         return switch (b) {
             case 0x1 -> NUMBER;
             case 0x2 -> REGISTER;
+            case 0x3 -> POINTER;
             //case 0x3 -> MEMORY;
             default -> throw new RuntimeException("unknown operand type: %d".formatted(b));
         };

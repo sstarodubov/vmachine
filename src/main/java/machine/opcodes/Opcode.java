@@ -16,7 +16,8 @@ public enum Opcode {
     SUBL((byte) 0x6, "subl"),
     INQL((byte) 0x7, "incl"),
     DECL((byte) 0x8, "decl"),
-    MULL((byte) 0x9, "mull");
+    MULL((byte) 0x9, "mull"),
+    JMP((byte) 0xa, "jmp");
 
 
     public final byte code;

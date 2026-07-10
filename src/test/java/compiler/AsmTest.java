@@ -296,8 +296,6 @@ class AsmTest {
         assertEquals((long) Integer.MAX_VALUE * 4, result.getLong(0));
     }
 
-
-
     @Test
     void test15() {
         //EDX:EAX = EAX × operand32
@@ -320,5 +318,29 @@ class AsmTest {
         result.putInt(cpu.regStorage.readEdx());
         result.putInt(4, cpu.regStorage.readEax());
         assertEquals((long) Integer.MAX_VALUE * 4, result.getLong(0));
+    }
+
+   // @Test
+    void test16() {
+        //EDX:EAX = EAX × operand32
+        final var program = """
+               .globl _start
+               .section .text
+               
+               _start:
+                   movl $11, %edi      
+                   jmp exit           
+                   movl $22, %edi    
+               exit:                
+                   movl $60, %eax
+                   syscall
+            """;
+
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+        final int status = cpu.run(code);
+
+        assertEquals(11, cpu.statusCode);
     }
 }

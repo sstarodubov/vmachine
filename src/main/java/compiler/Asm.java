@@ -229,6 +229,8 @@ public final class Asm {
                 consume(TokenType.STRING);
                 compileOperands1(4);
             }
+            case JMP -> {
+            }
         }
     }
 
