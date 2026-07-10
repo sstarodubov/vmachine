@@ -52,7 +52,7 @@ public final class CPU {
 
         /*
             Command Structure:
-            [Opcode] [количество операндов] [...типы операндов] [...операнды]
+            [Opcode] [тип операнда, операнд]
          */
         Opcode curOpcode;
         byte curByte;
@@ -66,12 +66,12 @@ public final class CPU {
                     final int register = ((Register) t.to()).id();
                     regStorage.writeInt(register, resolve(t.from(), 4));
                 }
-                case MOVW -> {
+                case Opcode.MOVW -> {
                     final SingleTransfer t = prepareMovTransfer(2);
                     final int register = ((Register) t.to()).id();
                     regStorage.writeShort(register, (short) resolve(t.from(), 2));
                 }
-                case MOVB -> {
+                case Opcode.MOVB -> {
                     final SingleTransfer t = prepareMovTransfer(1);
                     final int register = ((Register) t.to()).id();
                     regStorage.writeByte(register, (byte) resolve(t.from(), 1));
@@ -126,7 +126,13 @@ public final class CPU {
                             regStorage.writeInt(eaxId, eaxVal);
                         }
                     }
-
+                }
+                case JMP -> {
+                     final Operand operand = readOperand(4);
+                     switch (operand) {
+                         case Number(int address) -> regStorage.writeEip(address);
+                         default -> throw new UnsupportedOperationException("jmp. unknown operand: %s".formatted(operand));
+                     }
                 }
             }
         }

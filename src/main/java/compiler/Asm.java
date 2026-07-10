@@ -24,7 +24,8 @@ public final class Asm {
     private Token curToken = null;
     private final ByteBuffer codeBuff;
     private final List<String> globals = new ArrayList<>();
-    private final Map<String, Integer> labels = new HashMap<>();
+    private final Map<String, Integer> labelsToAddress = new HashMap<>();
+    private final Map<String, List<Integer>> labelsPlaces = new HashMap<>();
 
     int codePos = 32  /*32 bytes for header*/;
     int textSegStart = -1;
@@ -64,6 +65,13 @@ public final class Asm {
 
     private void postHandle() {
         fillHeader();
+
+        // проставляем реальные адреса вместо меток
+        for (final var entry : labelsPlaces.entrySet()) {
+            for (final int idx : entry.getValue()) {
+                 codeBuff.putInt(idx, labelsToAddress.get(entry.getKey()));
+            }
+        }
     }
 
     private void fillHeader() {
@@ -78,7 +86,7 @@ public final class Asm {
         //main function
         require(globals.size() == 1, "only one main function is allowed");
         final String mainFn = globals.getFirst();
-        final Integer addrMainFn = labels.get(mainFn);
+        final Integer addrMainFn = labelsToAddress.get(mainFn);
         require(addrMainFn != null, "address of main function must exists");
         writeToCodeBuff(0, addrMainFn, 4);
 
@@ -126,8 +134,24 @@ public final class Asm {
                 appendToCodeBuff(sourceRegId, 1);
                 consume(TokenType.STRING);
             }
+            case POINTER -> {
+                consume(TokenType.POINTER);
+                compileOperands1(operSize);
+            }
+            case STRING -> { //label
+                appendToCodeBuff(OperandType.NUMBER.code, 1); // указываем что это direct
+                storeLabelPlace(curToken.lexeme(), codePos); //сохраняем место куда потом нужно будет проставить физический адресс метки
+                appendToCodeBuff(-1, 4); // это место пока заполянем числом -1
+                consume(TokenType.STRING);
+            }
             default -> throw new IllegalStateException("Unexpected token value " + curToken.type());
         }
+    }
+
+    private void storeLabelPlace(final String label, final int idx) {
+       final var list = labelsPlaces.getOrDefault(label, new ArrayList<>());
+       list.add(idx);
+       labelsPlaces.put(label, list);
     }
 
     private void compileOperands2(final int operSize) {
@@ -217,7 +241,7 @@ public final class Asm {
                 final var labelName = curToken.lexeme();
                 consume(TokenType.STRING);
                 consume(TokenType.COLON);
-                labels.put(labelName, codePos);
+                labelsToAddress.put(labelName, codePos);
             }
             case INQL -> {
                 appendToCodeBuff(Opcode.INQL.code, 1);

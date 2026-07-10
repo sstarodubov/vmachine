@@ -57,6 +57,10 @@ public class Tokenizer {
                 pos++;
                 yield new Token(TokenType.EOL, "\n");
             }
+            case '*' -> {
+                pos++;
+                yield new Token(TokenType.POINTER, "*");
+            }
             case char num when Character.isDigit(num) -> readNum();
             default -> readString();
         };
