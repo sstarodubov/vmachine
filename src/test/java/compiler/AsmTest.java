@@ -345,4 +345,58 @@ class AsmTest {
 
         assertEquals(100, cpu.statusCode);
     }
+
+
+    @Test
+    void test20() {
+        final var program = """
+                .globl _start
+                .section .text
+                _start:
+                    movl $5, %ecx
+                    movl $5, %edx
+                    subl %ecx, %edx     # RDX = RDX - RCX
+                    jz zero_set         # если флаг нуля установлен, переход к метке zero_set
+                    movl $2, %edi       # если флаг нуля не установлен, RDI = 2
+                    jmp exit
+                zero_set:              # если флаг нуля установлен
+                    movl $4, %edi       # RDI = 4
+                exit:
+                    movl $60, %eax
+                    syscall
+            """;
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+        final int status = cpu.run(code);
+
+        assertEquals(4, cpu.statusCode);
+    }
+
+
+    @Test
+    void test21() {
+        final var program = """
+                .globl _start
+                .section .text
+                _start:
+                    movl $5, %ecx
+                    movl $4, %edx
+                    subl %ecx, %edx   
+                    jz zero_set      
+                    movl $2, %edi   
+                    jmp exit
+                zero_set:          
+                    movl $4, %edi  
+                exit:
+                    movl $60, %eax
+                    syscall
+            """;
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+        final int status = cpu.run(code);
+
+        assertEquals(2, cpu.statusCode);
+    }
 }

@@ -16,7 +16,8 @@ public enum Opcode {
     DECL((byte) 0x6, "decl"),
     MULL((byte) 0x7, "mull"),
     JMP((byte) 0x8, "jmp"),
-    JC((byte) 0x9, "jc");
+    JC((byte) 0x9, "jc"),
+    JZ((byte) 0xa, "jz");
 
 
 
