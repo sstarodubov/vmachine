@@ -127,11 +127,11 @@ public final class Asm {
                 consume(TokenType.STRING);
                 yield new Register(sourceRegName, sourceRegId);
             }
-            case POINTER -> {
-                consume(TokenType.POINTER);
-                appendToCodeBuff(OperandType.POINTER.code, 1);
+            case ASTERIX -> {
+                consume(TokenType.ASTERIX);
+                appendToCodeBuff(OperandType.ASTERIX.code, 1);
                 compileOperands1();
-                yield new Pointer();
+                yield new Asterix();
             }
             case DOLLAR -> {
                 consume(TokenType.DOLLAR);
@@ -162,7 +162,7 @@ public final class Asm {
     }
 
     private void handleLabel() {
-        appendToCodeBuff(OperandType.NUMBER.code, 1); // указываем что это direct
+        appendToCodeBuff(OperandType.MEMORY_ADDR.code, 1); // указываем что это direct
         addLabelPosToFillLater(curToken.lexeme(), codePos); //сохраняем место куда потом нужно будет проставить физический адресс метки
         appendToCodeBuff(-1, 4); // это место пока заполянем числом -1
         consume(TokenType.STRING);

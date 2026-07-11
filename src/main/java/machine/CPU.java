@@ -63,8 +63,14 @@ public final class CPU {
             switch (curOpcode) {
                 case Opcode.MOVL -> {
                     final SingleTransfer t = prepareMovTransfer();
-                    final int register = ((Register) t.to()).id();
-                    regStorage.writeInt(register, resolve(t.from()));
+                    final int data = switch (t.from()) {
+                        case Number(int num) -> num;
+                        case Register(int id) -> regStorage.readInt(id);
+                        case MemoryAddr(int addr) -> addr;
+                        default -> throw new IllegalStateException("Unexpected value: " + t.from());
+                    };
+                    final int register = t.to().value();
+                    regStorage.writeInt(register, data);
                 }
                 case Opcode.SYSCALL -> {
                     final int syscallId = regStorage.readEax();
@@ -75,72 +81,68 @@ public final class CPU {
                 }
                 case Opcode.ADDL -> {
                     final SingleTransfer t = prepareMathOpTransfer(Long::sum);
-                    final int data = resolve(t.from());
-                    final int register = ((Register) t.to()).id();
+                    final int data = t.from().value();
+                    final int register = t.to().value();
                     regStorage.writeInt(register, data);
                 }
                 case Opcode.SUBL -> {
                     final SingleTransfer t = prepareMathOpTransfer((a, b) -> b - a);
-                    final int data = resolve(t.from());
-                    final int register = ((Register) t.to()).id();
+                    final int data = t.from().value();
+                    final int register = t.to().value();
                     regStorage.writeInt(register, data);
                 }
                 case Opcode.INQL -> {
                     final SingleTransfer t = prepareIncrementTransfer(a -> a + 1);
-                    final int data = resolve(t.from());
-                    final int register = ((Register) t.to()).id();
+                    final int data = t.from().value();
+                    final int register = t.to().value();
                     regStorage.writeInt(register, data);
                 }
                 case Opcode.DECL -> {
                     final SingleTransfer t = prepareIncrementTransfer( a -> a - 1);
-                    final int data = resolve(t.from());
-                    final int register = ((Register) t.to()).id();
+                    final int data = t.from().value();
+                    final int register = t.to().value();
                     regStorage.writeInt(register, data);
                 }
                 case MULL -> {
                     final Transfer t = prepareMullTransfer();
                     switch (t) {
                         case SingleTransfer(Operand num, Operand eax) -> {
-                            final int data = resolve(num);
-                            final int id = ((Register) eax).id();
+                            final int data = num.value();
+                            final int id = eax.value();
                             regStorage.writeInt(id, data);
                             regStorage.writeInt(RegStorage.edx, 0);
                         }
                         case DoubleTransfer(SingleTransfer edx, SingleTransfer eax) -> {
-                            final int edxVal = resolve(edx.from());
-                            final int edxId = ((Register) edx.to()).id();
+                            final int edxVal = edx.from().value();
+                            final int edxId = edx.to().value();
                             regStorage.writeInt(edxId, edxVal);
 
-                            final int eaxVal = resolve(eax.from());
-                            final int eaxId = ((Register) eax.to()).id();
+                            final int eaxVal = eax.from().value();
+                            final int eaxId = eax.to().value();
                             regStorage.writeInt(eaxId, eaxVal);
                         }
                     }
                 }
                 case JMP -> {
                      final Operand operand = readOperand();
-                     final int addr = resolve(operand);
-                     regStorage.writeEip(addr);
+                     handleJmp(operand);
                 }
                 case JC -> {
                      final Operand operand = readOperand();
                      if (regStorage.readCF()) {
-                         final int addr = resolve(operand);
-                         regStorage.writeEip(addr);
+                        handleJmp(operand);
                      }
                 }
                 case JZ -> {
                     final Operand operand = readOperand();
                     if (regStorage.readZF()) {
-                        final int addr = resolve(operand);
-                        regStorage.writeEip(addr);
+                         handleJmp(operand);
                     }
                 }
                 case JNZ -> {
                     final Operand operand = readOperand();
                     if (!regStorage.readZF()) {
-                        final int addr = resolve(operand);
-                        regStorage.writeEip(addr);
+                         handleJmp(operand);
                     }
                 }
             }
@@ -149,11 +151,24 @@ public final class CPU {
         return statusCode;
     }
 
+    private void handleJmp(final Operand operand) {
+        switch (operand) {
+            case MemoryAddr(int addr) -> regStorage.writeEip(addr);
+            case Register(int addr) -> regStorage.writeEip(addr);
+            case Asterix a -> {
+                final int addr = resolve(a);
+                regStorage.writeEip(addr);
+            }
+            default -> throw new UnsupportedOperationException();
+        }
+    }
+
     private int resolve(final Operand op) {
        return switch (op) {
-           case Number(int num) -> num;
-           case Pointer(Operand p) -> resolve(p);
+           case Asterix(Operand p) -> resolve(p);
            case Register(int id) -> regStorage.readInt(id);
+           case MemoryAddr(int addr) -> memory.readTextInt(addr);
+           default -> throw new UnsupportedOperationException();
        };
     }
 
@@ -189,13 +204,12 @@ public final class CPU {
     }
 
     Operand readOperand() {
-        // first operand. (number | register)
-        // get value
         final OperandType type1 = OperandType.fromByte(readTextByte());
         return switch (type1) {
             case NUMBER -> new Number(readTextInt());
             case REGISTER -> new Register(readTextByte());
-            case POINTER -> new Pointer(readOperand());
+            case ASTERIX -> new Asterix(readOperand());
+            case MEMORY_ADDR -> new MemoryAddr(readTextInt());
         };
     }
 
@@ -219,9 +233,15 @@ public final class CPU {
         final Operand first = readOperand();
         final Operand second = readOperand();
 
-        require(second instanceof Register, "addl. second operand must be register");
+        final long arg1 = switch (first) {
+            case Number(int num) -> num;
+            case Register(int id) -> regStorage.readInt(id);
+            default -> throw new UnsupportedOperationException();
+        };
 
-        final long result = fn.apply((long) resolve(first), (long) resolve(second));
+        require(second instanceof Register, "addl. second operand must be register");
+        final long arg2 = regStorage.readInt(second.value());
+        final long result = fn.apply(arg1, arg2);
         setFlags(result);
         return new SingleTransfer(new Number((int) result), second);
     }

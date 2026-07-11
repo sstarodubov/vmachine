@@ -411,9 +411,9 @@ class AsmTest {
                    movl $5, %ecx
                    movl $0, %edi
                loop:
-                   addl $2, %edi     # RDI = RDI + 2\s
-                   subl $1, %ecx     # RCX = RCX - 1\s
-                   jnz loop          # если флаг нуля НЕ установлен, переход обратно к метке loop
+                   addl $2, %edi     
+                   subl $1, %ecx    
+                   jnz loop        
 
                    movl $60, %eax
                    syscall

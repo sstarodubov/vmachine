@@ -24,6 +24,14 @@ public final class Memory {
         return textSegEndIdx + 1;
     }
 
+    public int readInt(final int offset) {
+        return this.mem.getInt(offset);
+    }
+
+    public void writeInt(final int offset, final int data) {
+        this.mem.putInt(offset, data);
+    }
+
     public byte readTextByte(final int offset) {
         Assertions.require(offset >= textSegStartIdx, "seg fault: %d".formatted(offset));
         Assertions.require(offset <= textSegEndIdx, "seg fault: %d".formatted(offset));

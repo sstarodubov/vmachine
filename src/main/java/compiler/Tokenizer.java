@@ -59,7 +59,7 @@ public class Tokenizer {
             }
             case '*' -> {
                 pos++;
-                yield new Token(TokenType.POINTER, "*");
+                yield new Token(TokenType.ASTERIX, "*");
             }
             case char num when Character.isDigit(num) -> readNum();
             default -> readString();
