@@ -134,9 +134,9 @@ public final class Asm {
                 yield new Pointer();
             }
             case DOLLAR -> {
-                // $number
                 consume(TokenType.DOLLAR);
                 yield switch (curToken.type()) {
+                    // $number
                     case NUMBER -> {
                         final int num = IntegerUtils.parseInt(curToken.lexeme());
                         appendToCodeBuff(OperandType.NUMBER.code, 1);
@@ -144,6 +144,7 @@ public final class Asm {
                         consume(TokenType.NUMBER);
                         yield new Number(num);
                     }
+                    // case $label
                     case STRING -> {
                         handleLabel();
                         yield new Label();
@@ -230,6 +231,11 @@ public final class Asm {
             }
             case JMP -> {
                 appendToCodeBuff(Opcode.JMP.code, 1);
+                consume(TokenType.STRING);
+                compileOperands1();
+            }
+            case JC -> {
+                appendToCodeBuff(Opcode.JC.code, 1);
                 consume(TokenType.STRING);
                 compileOperands1();
             }

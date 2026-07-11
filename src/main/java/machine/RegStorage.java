@@ -27,6 +27,7 @@ public final class RegStorage {
     //flags
     public static final int cf = 36;
     public static final int of = 37;
+    public static final int zf = 38;
 
 
 
@@ -67,16 +68,26 @@ public final class RegStorage {
         mem.put(cf, (byte) 0);
     }
 
-    public void clearOF() {
+    public boolean readZF() {
+        return mem.get(zf) == 1;
+    }
+
+   public void setZF() {
+        mem.put(zf, (byte) 1);
+   }
+
+   public void clearZF() {
+        mem.put(zf, (byte) 0);
+   }
+
+   public void clearOF() {
         mem.put(of, (byte) 0);
     }
 
-
-
     // utils
-    public static boolean isEq(final String reg1, final String reg2) {
+   public static boolean isEq(final String reg1, final String reg2) {
         return RegStorage.getRegisterSize(reg2) == RegStorage.getRegisterSize(reg1);
-    }
+   }
 
     public static boolean isCompatibleMovSemantic(final int operSize, final String regName) {
         return operSize == RegStorage.getRegisterSize(regName);

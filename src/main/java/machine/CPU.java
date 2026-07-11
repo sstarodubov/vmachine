@@ -74,7 +74,7 @@ public final class CPU {
                     // skip
                 }
                 case Opcode.ADDL -> {
-                    final SingleTransfer t = prepareMathOpTransfer(Integer::sum);
+                    final SingleTransfer t = prepareMathOpTransfer(Long::sum);
                     final int data = resolve(t.from());
                     final int register = ((Register) t.to()).id();
                     regStorage.writeInt(register, data);
@@ -122,6 +122,13 @@ public final class CPU {
                      final int addr = resolve(operand);
                      regStorage.writeEip(addr);
                 }
+                case JC -> {
+                     final Operand operand = readOperand();
+                     if (regStorage.readCF()) {
+                         final int addr = resolve(operand);
+                         regStorage.writeEip(addr);
+                     }
+                }
             }
         }
 
@@ -143,14 +150,7 @@ public final class CPU {
         require(operand instanceof Register, "must be register");
         final long secondVal = resolve(operand);
         final long result = secondVal * firstVal;
-
-        if (result > Integer.MAX_VALUE || result < Integer.MIN_VALUE) {
-            regStorage.setCF();
-            regStorage.setOF();
-        } else {
-            regStorage.clearCF();
-            regStorage.clearOF();
-        }
+        setFlags(result);
 
         if (regStorage.readOF()) {
             final var longBuff = ByteBuffer.allocate(8);
@@ -166,11 +166,12 @@ public final class CPU {
         );
     }
 
-    private SingleTransfer prepareIncrementTransfer(final Function<Integer, Integer> fn) {
+    private SingleTransfer prepareIncrementTransfer(final Function<Long, Long> fn) {
         final Operand operand = readOperand();
-        final int result = fn.apply(resolve(operand));
+        final long result = fn.apply((long) resolve(operand));
+        setFlags(result);
         require(operand instanceof Register, "must be register with value");
-        return new SingleTransfer(new Number(result), operand);
+        return new SingleTransfer(new Number((int) result), operand);
     }
 
     Operand readOperand() {
@@ -184,14 +185,31 @@ public final class CPU {
         };
     }
 
-    SingleTransfer prepareMathOpTransfer(final BiFunction<Integer, Integer, Integer> fn) {
+    void setFlags(final long result) {
+        if (result > Integer.MAX_VALUE || result < Integer.MIN_VALUE) {
+            regStorage.setCF();
+            regStorage.setOF();
+        } else {
+            regStorage.clearCF();
+            regStorage.clearOF();
+        }
+
+        if (result == 0) {
+            regStorage.setZF();
+        } else {
+            regStorage.clearZF();
+        }
+    }
+
+    SingleTransfer prepareMathOpTransfer(final BiFunction<Long, Long, Long> fn) {
         final Operand first = readOperand();
         final Operand second = readOperand();
 
         require(second instanceof Register, "addl. second operand must be register");
 
-        final int result = fn.apply(resolve(first), resolve(second));
-        return new SingleTransfer(new Number(result), second);
+        final long result = fn.apply((long) resolve(first), (long) resolve(second));
+        setFlags(result);
+        return new SingleTransfer(new Number((int) result), second);
     }
 
     SingleTransfer prepareMovTransfer() {

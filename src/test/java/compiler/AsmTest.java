@@ -293,4 +293,56 @@ class AsmTest {
 
         assertEquals(11, cpu.statusCode);
     }
+
+    @Test
+    void test18() {
+        final var program = """
+             .globl _start
+             .section .text
+             _start:
+                 movl $0x7fffffff, %ecx
+                 movl $1, %edx
+                 addl %ecx, %edx     # RDX = RDX + RCX
+                 jc carry_set       # если флаг переноса установлен, переход к метке carry_set
+                 movl $0, %edi       # если флаг переноса не установлен, RDI = 0
+                 jmp exit
+             carry_set:              # если флаг переноса установлен
+                 movl $1, %edi       # RDI = 1
+             exit:                   # метка exit
+                 movl $60, %eax
+                 syscall
+            """;
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+        final int status = cpu.run(code);
+
+        assertEquals(1, cpu.statusCode);
+    }
+
+    @Test
+    void test19() {
+        final var program = """
+             .globl _start
+             .section .text
+             _start:
+                 movl $100, %ecx
+                 movl $1, %edx
+                 addl %ecx, %edx
+                 jc carry_set     
+                 movl $100, %edi   
+                 jmp exit
+             carry_set:         
+                 movl $1, %edi 
+             exit:            
+                 movl $60, %eax
+                 syscall
+            """;
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+        final int status = cpu.run(code);
+
+        assertEquals(100, cpu.statusCode);
+    }
 }
