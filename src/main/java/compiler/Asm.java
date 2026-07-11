@@ -244,6 +244,11 @@ public final class Asm {
                 consume(TokenType.STRING);
                 compileOperands1();
             }
+            case JNZ -> {
+                appendToCodeBuff(Opcode.JNZ.code, 1);
+                consume(TokenType.STRING);
+                compileOperands1();
+            }
         }
     }
 

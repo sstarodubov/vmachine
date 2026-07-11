@@ -136,6 +136,13 @@ public final class CPU {
                         regStorage.writeEip(addr);
                     }
                 }
+                case JNZ -> {
+                    final Operand operand = readOperand();
+                    if (!regStorage.readZF()) {
+                        final int addr = resolve(operand);
+                        regStorage.writeEip(addr);
+                    }
+                }
             }
         }
 

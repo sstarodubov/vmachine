@@ -399,4 +399,30 @@ class AsmTest {
 
         assertEquals(2, cpu.statusCode);
     }
+
+
+
+    @Test
+    void test22() {
+        final var program = """
+              .globl _start
+               .section .text
+               _start:
+                   movl $5, %ecx
+                   movl $0, %edi
+               loop:
+                   addl $2, %edi     # RDI = RDI + 2\s
+                   subl $1, %ecx     # RCX = RCX - 1\s
+                   jnz loop          # если флаг нуля НЕ установлен, переход обратно к метке loop
+
+                   movl $60, %eax
+                   syscall
+            """;
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+        final int status = cpu.run(code);
+
+        assertEquals(10, cpu.statusCode);
+    }
 }
