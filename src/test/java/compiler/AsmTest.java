@@ -270,4 +270,27 @@ class AsmTest {
 
         assertEquals(11, cpu.statusCode);
     }
+
+    @Test
+    void test17() {
+        final var program = """
+              .globl _start
+              .section .text
+              _start:
+                  movl $exit, %ebx
+                  movl $11, %edi
+                  jmp *%ebx
+                  movl $6, %edi
+              exit:
+                  movl $60, %eax
+                  syscall
+            """;
+
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+        final int status = cpu.run(code);
+
+        assertEquals(11, cpu.statusCode);
+    }
 }

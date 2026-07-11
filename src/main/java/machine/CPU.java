@@ -119,10 +119,8 @@ public final class CPU {
                 }
                 case JMP -> {
                      final Operand operand = readOperand();
-                     switch (operand) {
-                         case Number(int address) -> regStorage.writeEip(address);
-                         default -> throw new UnsupportedOperationException("jmp. unknown operand: %s".formatted(operand));
-                     }
+                     final int addr = resolve(operand);
+                     regStorage.writeEip(addr);
                 }
             }
         }

@@ -1,10 +1,10 @@
 .globl _start
 .text
 _start:
-
-    movq $11, %rcx  # RCX = 11
-    movq %rcx, %rdi  # RDI = 11
-
-    addq %rcx, %rdi  # RDI = RCX + RDI = 11 + 22 = 33
-    movq $60, %rax  # RAX = 60
+    movq $exit, %rbx    # в регистре RBX адрес метки exit
+    movq $11, %rdi
+    jmp *%rbx       # переход по адресу, который хранится в регистре RBX
+    movq $6, %rdi
+exit:
+    movq $60, %rax
     syscall

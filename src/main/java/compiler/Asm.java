@@ -34,7 +34,7 @@ public final class Asm {
 
     public Asm(final String program) {
         this.tokenizer = new Tokenizer(program);
-        this.codeBuff = ByteBuffer.allocate(64);
+        this.codeBuff = ByteBuffer.allocate(128);
     }
 
     private void consume(final TokenType expectedType) {
@@ -129,29 +129,42 @@ public final class Asm {
             }
             case POINTER -> {
                 consume(TokenType.POINTER);
+                appendToCodeBuff(OperandType.POINTER.code, 1);
                 compileOperands1();
                 yield new Pointer();
             }
             case DOLLAR -> {
                 // $number
                 consume(TokenType.DOLLAR);
-                require(curToken.type() == TokenType.NUMBER, "after $ must be int, but %s".formatted(curToken));
-                final int num = IntegerUtils.parseInt(curToken.lexeme());
-                appendToCodeBuff(OperandType.NUMBER.code, 1);
-                appendToCodeBuff(num, 4);
-                consume(TokenType.NUMBER);
-                yield new Number(num);
+                yield switch (curToken.type()) {
+                    case NUMBER -> {
+                        final int num = IntegerUtils.parseInt(curToken.lexeme());
+                        appendToCodeBuff(OperandType.NUMBER.code, 1);
+                        appendToCodeBuff(num, 4);
+                        consume(TokenType.NUMBER);
+                        yield new Number(num);
+                    }
+                    case STRING -> {
+                        handleLabel();
+                        yield new Label();
+                    }
+                    default -> throw new UnsupportedOperationException("must be number or string. %s".formatted(curToken));
+                };
             }
             case STRING -> {
                 //label
-                appendToCodeBuff(OperandType.NUMBER.code, 1); // указываем что это direct
-                addLabelPosToFillLater(curToken.lexeme(), codePos); //сохраняем место куда потом нужно будет проставить физический адресс метки
-                appendToCodeBuff(-1, 4); // это место пока заполянем числом -1
-                consume(TokenType.STRING);
+                handleLabel();
                 yield new Label();
             }
             default -> throw new IllegalStateException("Unexpected token value " + curToken.type());
         };
+    }
+
+    private void handleLabel() {
+        appendToCodeBuff(OperandType.NUMBER.code, 1); // указываем что это direct
+        addLabelPosToFillLater(curToken.lexeme(), codePos); //сохраняем место куда потом нужно будет проставить физический адресс метки
+        appendToCodeBuff(-1, 4); // это место пока заполянем числом -1
+        consume(TokenType.STRING);
     }
 
     private void addLabelPosToFillLater(final String label, final int idx) {
@@ -161,9 +174,7 @@ public final class Asm {
     }
 
     private void compileOperands2() {
-        final Operand firstOperand = compileOperands1();
-        require(firstOperand instanceof Number || firstOperand instanceof Register,
-                "first operand must be num or register");
+        compileOperands1();
 
         consume(TokenType.COMMA);
 
