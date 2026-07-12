@@ -478,4 +478,115 @@ class AsmTest {
 
         assertEquals(2, cpu.statusCode);
     }
+
+
+    @Test
+    void test25() {
+        final var program = """
+                .globl _start
+                .text
+                _start:
+                    movl $0x7fffffff, %ecx
+                    movl $1, %edx
+                    addl %ecx, %edx         # складываем RCX и RDX, устанавливается флаг переноса CF
+                
+                    movl $2, %ecx           # вариант, если флаг переноса сброшен (CF = 0)
+                    movl $4, %edx           # вариант, если флаг переноса установлен (CF = 1)
+                
+                    cmovncl %ecx, %edi        # Если CF = 0
+                    cmovcl %edx, %edi         # Если CF = 1
+                
+                    movl $60, %eax
+                    syscall
+               """;
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+        final int status = cpu.run(code);
+
+        assertEquals(4, cpu.statusCode);
+    }
+
+    @Test
+    void test26() {
+        final var program = """
+                .globl _start
+                .text
+                _start:
+                    movl $0, %ecx
+                    movl $1, %edx
+                    addl %ecx, %edx         # складываем RCX и RDX, устанавливается флаг переноса CF
+                
+                    movl $2, %ecx           # вариант, если флаг переноса сброшен (CF = 0)
+                    movl $4, %edx           # вариант, если флаг переноса установлен (CF = 1)
+                
+                    cmovncl %ecx, %edi        # Если CF = 0
+                    cmovcl %edx, %edi         # Если CF = 1
+                
+                    movl $60, %eax
+                    syscall
+               """;
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+        final int status = cpu.run(code);
+
+        assertEquals(2, cpu.statusCode);
+    }
+
+    @Test
+    void test27() {
+        final var program = """
+                .globl _start
+                .text
+                _start:
+                    movl $2, %ecx
+                    movl $2, %edx
+                    cmpl %ecx, %edx         # сравниваем RCX и RDX, устанавливается флаг нуля ZF
+    
+                    movl $8, %ecx           # вариант, если флаг нуля сброшен (ZF = 0)
+                    movl $16, %edx           # вариант, если флаг нуля установлен (ZF = 1)
+    
+                    cmovnel %ecx, %edi        # Если ZF = 0
+                    cmovel %edx, %edi         # Если ZF = 1
+    
+                    movl $60, %eax
+                    syscall
+               """;
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+        final int status = cpu.run(code);
+
+        assertEquals(16, cpu.statusCode);
+    }
+
+
+
+    @Test
+    void test28() {
+        final var program = """
+                .globl _start
+                .text
+                _start:
+                    movl $3, %ecx
+                    movl $2, %edx
+                    cmpl %ecx, %edx         # сравниваем RCX и RDX, устанавливается флаг нуля ZF
+    
+                    movl $8, %ecx           # вариант, если флаг нуля сброшен (ZF = 0)
+                    movl $16, %edx           # вариант, если флаг нуля установлен (ZF = 1)
+    
+                    cmovnel %ecx, %edi        # Если ZF = 0
+                    cmovel %edx, %edi         # Если ZF = 1
+    
+                    movl $60, %eax
+                    syscall
+               """;
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+        final int status = cpu.run(code);
+
+        assertEquals(8, cpu.statusCode);
+    }
 }

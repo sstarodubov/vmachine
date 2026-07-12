@@ -8,8 +8,7 @@ import machine.opcodes.operand.transfers.SingleTransfer;
 import machine.opcodes.operand.transfers.Transfer;
 
 import java.nio.ByteBuffer;
-import java.util.function.BiFunction;
-import java.util.function.Function;
+import java.util.function.*;
 
 import static machine.utils.Assertions.require;
 
@@ -61,17 +60,16 @@ public final class CPU {
             curOpcode = Opcode.fromByte(curByte);
             require(curOpcode != null, "unknown opcode: %d".formatted(curByte));
             switch (curOpcode) {
-                case Opcode.MOVL -> {
-                    final SingleTransfer t = prepareMovTransfer();
-                    final int data = switch (t.from()) {
-                        case Number(int num) -> num;
-                        case Register(int id) -> regStorage.readInt(id);
-                        case MemoryAddr(int addr) -> addr;
-                        default -> throw new IllegalStateException("Unexpected value: " + t.from());
-                    };
-                    final int register = t.to().value();
-                    regStorage.writeInt(register, data);
-                }
+                case CMOVNCL ->
+                    doMoveIf(() -> !regStorage.readCF());
+                case CMOVCL ->
+                    doMoveIf(regStorage::readCF);
+                case Opcode.MOVL ->
+                    doMoveIf(() -> true);
+                case CMOVEL ->
+                    doMoveIf(regStorage::readZF);
+                case CMOVNEL ->
+                    doMoveIf(() -> !regStorage.readZF());
                 case Opcode.SYSCALL -> {
                     final int syscallId = regStorage.readEax();
                     sysCallTable.executeOn(this, syscallId);
@@ -329,5 +327,19 @@ public final class CPU {
         require(second instanceof Register, "mov. 2's operand must be register");
 
         return new SingleTransfer(first, second);
+    }
+
+    void doMoveIf(final Supplier<Boolean> moveCondition) {
+        final SingleTransfer t = prepareMovTransfer();
+        final int data = switch (t.from()) {
+            case Number(int num) -> num;
+            case Register(int id) -> regStorage.readInt(id);
+            case MemoryAddr(int addr) -> addr;
+            default -> throw new IllegalStateException("Unexpected value: " + t.from());
+        };
+        if (moveCondition.get()) {
+            final int register = t.to().value();
+            regStorage.writeInt(register, data);
+        }
     }
 }

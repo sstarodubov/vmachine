@@ -25,8 +25,11 @@ public enum Opcode {
     JG((byte) 15, "jg"),
     JGE((byte) 16, "jge"),
     JL((byte) 17, "jl"),
-    JLE((byte) 18, "jle");
-
+    JLE((byte) 18, "jle"),
+    CMOVNCL((byte) 19, "cmovncl"),
+    CMOVCL((byte) 20, "cmovcl"),
+    CMOVNEL((byte) 21, "cmovnel"),
+    CMOVEL((byte) 22, "cmovel");
 
 
     public final byte code;

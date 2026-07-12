@@ -192,6 +192,26 @@ public final class Asm {
                 consume(TokenType.STRING);
                 compileOperands2();
             }
+            case CMOVCL -> {
+                appendToCodeBuff(Opcode.CMOVCL.code, 1);
+                consume(TokenType.STRING);
+                compileOperands2();
+            }
+            case CMOVNCL -> {
+                appendToCodeBuff(Opcode.CMOVNCL.code, 1);
+                consume(TokenType.STRING);
+                compileOperands2();
+            }
+            case CMOVEL -> {
+                appendToCodeBuff(Opcode.CMOVEL.code, 1);
+                consume(TokenType.STRING);
+                compileOperands2();
+            }
+            case CMOVNEL -> {
+                appendToCodeBuff(Opcode.CMOVNEL.code, 1);
+                consume(TokenType.STRING);
+                compileOperands2();
+            }
             case SYSCALL -> {
                 appendToCodeBuff(Opcode.SYSCALL.code, 1);
                 consume(TokenType.STRING);
