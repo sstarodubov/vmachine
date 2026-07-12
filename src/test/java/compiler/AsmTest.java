@@ -425,4 +425,57 @@ class AsmTest {
 
         assertEquals(10, cpu.statusCode);
     }
+
+
+    @Test
+    void test23() {
+        final var program = """
+              .globl _start
+              .section .text
+              _start:
+                  movl $1, %ebx
+                  movl $0, %eax
+                  cmpl %ebx, %eax     # сравниваем RAX и RBX. Фактически вычитаем RAX - RBX
+                  jc carry_set        # если произошел перенос
+                  movl $2, %edi       # если нет переноса
+                  jmp exit
+              carry_set:
+                  movl $4, %edi       # если есть перенос
+              exit:
+                  movl $60, %eax
+                  syscall
+            """;
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+        final int status = cpu.run(code);
+
+        assertEquals(4, cpu.statusCode);
+    }
+
+    @Test
+    void test24() {
+        final var program = """
+            .globl _start
+            .text
+            _start:
+                movl $33, %ecx
+                movl $22, %edx
+                cmpl %ecx, %edx
+                je equal       
+                movl $2, %edi 
+                jmp exit
+            equal:
+                movl $4, %edi  
+            exit:
+                movl $60, %eax
+                syscall
+            """;
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+        final int status = cpu.run(code);
+
+        assertEquals(2, cpu.statusCode);
+    }
 }

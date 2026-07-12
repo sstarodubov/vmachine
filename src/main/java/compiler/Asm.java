@@ -120,12 +120,13 @@ public final class Asm {
                 //case %reg
                 consume(TokenType.PERCENT);
                 require(curToken.type() == TokenType.STRING, "after percent must be name of register, but: %s".formatted(curToken));
-                final String sourceRegName = curToken.lexeme();
-                final int sourceRegId = RegStorage.registerIdFromName(sourceRegName);
+                final String regName = curToken.lexeme();
+                final int regId = RegStorage.registerIdFromName(regName);
+                require(regId != -1, "register must be supported: %s".formatted(regName));
                 appendToCodeBuff(OperandType.REGISTER.code, 1);
-                appendToCodeBuff(sourceRegId, 1);
+                appendToCodeBuff(regId, 1);
                 consume(TokenType.STRING);
-                yield new Register(sourceRegName, sourceRegId);
+                yield new Register(regName, regId);
             }
             case ASTERIX -> {
                 consume(TokenType.ASTERIX);
@@ -195,8 +196,8 @@ public final class Asm {
                 appendToCodeBuff(Opcode.SYSCALL.code, 1);
                 consume(TokenType.STRING);
             }
-            case NOP -> {
-            }
+            case NOP ->
+                    consume(TokenType.STRING);
             case ADDL -> {
                 appendToCodeBuff(Opcode.ADDL.code, 1);
                 consume(TokenType.STRING);
@@ -249,6 +250,41 @@ public final class Asm {
                 consume(TokenType.STRING);
                 compileOperands1();
             }
+            case CMPL -> {
+                appendToCodeBuff(Opcode.CMPL.code, 1);
+                consume(TokenType.STRING);
+                compileOperands2();
+            }
+            case JE -> {
+                appendToCodeBuff(Opcode.JE.code, 1);
+                consume(TokenType.STRING);
+                compileOperands1();
+            }
+            case JNE -> {
+                appendToCodeBuff(Opcode.JNE.code, 1);
+                consume(TokenType.STRING);
+                compileOperands1();
+            }
+            case JG -> {
+                appendToCodeBuff(Opcode.JG.code, 1);
+                consume(TokenType.STRING);
+                compileOperands1();
+            }
+            case JGE -> {
+                appendToCodeBuff(Opcode.JGE.code, 1);
+                consume(TokenType.STRING);
+                compileOperands1();
+            }
+            case JL -> {
+                appendToCodeBuff(Opcode.JL.code, 1);
+                consume(TokenType.STRING);
+                compileOperands1();
+            }
+            case JLE -> {
+                appendToCodeBuff(Opcode.JLE.code, 1);
+                consume(TokenType.STRING);
+                compileOperands1();
+            }
         }
     }
 
@@ -264,6 +300,21 @@ public final class Asm {
                 globals.add(directive);
                 consume(TokenType.STRING);
             }
+            case "text" -> {
+                require(textSegStart == -1, "section text must be one");
+                textSegStart = codePos;
+                closeProcessingSections();
+                processedSection = ProcessedSection.TEXT;
+                consume(TokenType.STRING);
+            }
+            case "data" -> {
+                require(dataSegStart == -1, "section data must be one");
+                dataSegStart = codePos;
+                closeProcessingSections();
+                processedSection = ProcessedSection.DATA;
+                consume(TokenType.STRING);
+            }
+
             case "section" -> {
                 consume(TokenType.STRING);
                 consume(TokenType.DOT);

@@ -8,17 +8,24 @@ import java.util.stream.Collectors;
 public enum Opcode {
 
     NOP((byte) 0, "nop"),
-    SYSCALL((byte) 0x1, "syscall"),
-    MOVL((byte) 0x2, "movl"),
-    ADDL((byte) 0x3, "addl"),
-    SUBL((byte) 0x4, "subl"),
-    INQL((byte) 0x5, "incl"),
-    DECL((byte) 0x6, "decl"),
-    MULL((byte) 0x7, "mull"),
-    JMP((byte) 0x8, "jmp"),
-    JC((byte) 0x9, "jc"),
-    JZ((byte) 0xa, "jz"),
-    JNZ((byte) 0xb, "jnz");
+    SYSCALL((byte) 1, "syscall"),
+    MOVL((byte) 2, "movl"),
+    ADDL((byte) 3, "addl"),
+    SUBL((byte) 4, "subl"),
+    INQL((byte) 5, "incl"),
+    DECL((byte) 6, "decl"),
+    MULL((byte) 7, "mull"),
+    JMP((byte) 8, "jmp"),
+    JC((byte) 9, "jc"),
+    JZ((byte) 10, "jz"),
+    JNZ((byte) 11, "jnz"),
+    CMPL((byte) 12, "cmpl"),
+    JE((byte) 13, "je"),
+    JNE((byte) 14, "jne"),
+    JG((byte) 15, "jg"),
+    JGE((byte) 16, "jge"),
+    JL((byte) 17, "jl"),
+    JLE((byte) 18, "jle");
 
 
 

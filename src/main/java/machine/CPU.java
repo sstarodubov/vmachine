@@ -125,24 +125,100 @@ public final class CPU {
                 }
                 case JMP -> {
                      final Operand operand = readOperand();
-                     handleJmp(operand);
+                     doJump(operand);
                 }
                 case JC -> {
                      final Operand operand = readOperand();
                      if (regStorage.readCF()) {
-                        handleJmp(operand);
+                        doJump(operand);
                      }
                 }
                 case JZ -> {
                     final Operand operand = readOperand();
                     if (regStorage.readZF()) {
-                         handleJmp(operand);
+                         doJump(operand);
                     }
                 }
                 case JNZ -> {
                     final Operand operand = readOperand();
                     if (!regStorage.readZF()) {
-                         handleJmp(operand);
+                         doJump(operand);
+                    }
+                }
+                case CMPL -> {
+                    final Operand op1 = readOperand();
+                    final Operand op2 = readOperand();
+
+                    final long val1 = switch (op1) {
+                        case Number(int num) -> num;
+                        case Register(int id) -> regStorage.readInt(id);
+                        default -> throw new UnsupportedOperationException();
+                    };
+                    final long val2 = switch (op2) {
+                        case Number(int num) -> num;
+                        case Register(int id) -> regStorage.readInt(id);
+                        default -> throw new UnsupportedOperationException();
+                    };
+
+                    final long diff = val2 - val1;
+                    if (diff == 0) {
+                        regStorage.setZF();
+                    } else {
+                        regStorage.clearOF();
+                    }
+
+                    if (diff < 0) {
+                        regStorage.setSF();
+                    } else {
+                        regStorage.clearCF();
+                    }
+
+                    if (val2 < val1) {
+                        regStorage.setCF();
+                    } else {
+                        regStorage.clearCF();
+                    }
+
+                    if (diff > Integer.MAX_VALUE || diff < Integer.MIN_VALUE ) {
+                        regStorage.setOF();
+                    } else {
+                        regStorage.clearOF();
+                    }
+                }
+                case JE -> {
+                   final var oper = readOperand();
+                   if (regStorage.readZF()) {
+                       doJump(oper);
+                   }
+                }
+                case JNE -> {
+                    final var oper = readOperand();
+                    if (!regStorage.readZF()) {
+                        doJump(oper);
+                    }
+                }
+                case JG -> {
+                    final var oper = readOperand();
+                    if (regStorage.readCF() == regStorage.readOF() && !regStorage.readZF()) {
+                        doJump(oper);
+                    }
+                }
+                case JGE -> {
+                    final var oper = readOperand();
+                    if (regStorage.readCF() == regStorage.readOF()) {
+                        doJump(oper);
+                    }
+                }
+                case JL -> {
+                    final var oper = readOperand();
+                    if(regStorage.readCF() != regStorage.readOF()) {
+                        doJump(oper);
+                    }
+                }
+                case JLE -> {
+                    final var oper = readOperand();
+                    if(regStorage.readCF() != regStorage.readOF() && regStorage.readZF()) {
+                        doJump(oper);
                     }
                 }
             }
@@ -151,7 +227,7 @@ public final class CPU {
         return statusCode;
     }
 
-    private void handleJmp(final Operand operand) {
+    private void doJump(final Operand operand) {
         switch (operand) {
             case MemoryAddr(int addr) -> regStorage.writeEip(addr);
             case Register(int addr) -> regStorage.writeEip(addr);

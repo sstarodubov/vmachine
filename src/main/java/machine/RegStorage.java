@@ -28,6 +28,7 @@ public final class RegStorage {
     public static final int cf = 36;
     public static final int of = 37;
     public static final int zf = 38;
+    public static final int sf = 39;
 
 
 
@@ -48,6 +49,18 @@ public final class RegStorage {
         };
     }
     // flags
+    public boolean readSF() {
+        return mem.get(sf) == 1;
+    }
+
+    public void setSF() {
+        mem.put(sf, (byte) 1);
+    }
+
+    public void clearSF() {
+        mem.put(sf, (byte) 0);
+    }
+
     public boolean readCF() {
         return mem.get(cf) == 1;
     }
