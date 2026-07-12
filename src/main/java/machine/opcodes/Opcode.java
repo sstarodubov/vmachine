@@ -29,7 +29,8 @@ public enum Opcode {
     CMOVNCL((byte) 19, "cmovncl"),
     CMOVCL((byte) 20, "cmovcl"),
     CMOVNEL((byte) 21, "cmovnel"),
-    CMOVEL((byte) 22, "cmovel");
+    CMOVEL((byte) 22, "cmovel"),
+    LOOPL((byte) 23, "loopl");
 
 
     public final byte code;

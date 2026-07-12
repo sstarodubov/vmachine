@@ -121,6 +121,13 @@ public final class CPU {
                         }
                     }
                 }
+                case LOOPL -> {
+                    final Operand operand = readOperand();
+                    regStorage.writeEcx(regStorage.readEcx() - 1);
+                    if (regStorage.readEcx() != 0) {
+                       doJump(operand);
+                    }
+                }
                 case JMP -> {
                      final Operand operand = readOperand();
                      doJump(operand);
