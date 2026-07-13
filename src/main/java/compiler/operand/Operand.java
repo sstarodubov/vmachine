@@ -1,4 +1,4 @@
 package compiler.operand;
 
-public sealed interface Operand permits Number, Register, Label, Asterix {
+public sealed interface Operand permits Var, Number, Register, Label, Asterix {
 }

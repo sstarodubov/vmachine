@@ -1,12 +1,10 @@
-.globl _start
-.text
-_start:
-    movq $5, %rcx
-    movq $0, %rdi
-loop:
-    addq $2, %rdi     # RDI = RDI + 2
-    subq $1, %rcx     # RCX = RCX - 1
-    jnz loop          # если флаг нуля НЕ установлен, переход обратно к метке loop
+        .globl _start
 
-    movq $60, %rax
-    syscall
+        .section .text
+        number: .long 123   # определяем объект number внутри секции .text
+
+        _start:
+            movl $number, %edx   # RDX = number
+            movl %edx, %edi     # RDI = RDX = number
+            movl $60, %eax
+            syscall

@@ -818,4 +818,26 @@ class AsmTest {
 
         assertEquals(-2, cpu.statusCode);
     }
+
+    @Test
+    void test39() {
+        final var program = """
+                .globl _start
+
+                .section .text
+                number: .long 123   # определяем объект number внутри секции .text
+
+                _start:
+                    movl number, %edx   # RDX = number
+                    movl %edx, %edi     # RDI = RDX = number
+                    movl $60, %eax
+                    syscall
+                """;
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+        final int status = cpu.run(code);
+
+        assertEquals(123, cpu.statusCode);
+    }
 }

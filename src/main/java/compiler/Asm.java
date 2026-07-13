@@ -25,6 +25,7 @@ public final class Asm {
     private final List<String> globals = new ArrayList<>();
     private final Map<String, Integer> labelsToAddress = new HashMap<>();
     private final Map<String, List<Integer>> labelsPosition = new HashMap<>();
+    private final Set<String> vars = new HashSet<>();
 
     int codePos = 32  /*32 bytes for header*/;
     int textSegStart = -1;
@@ -146,28 +147,33 @@ public final class Asm {
                         yield new Number(num);
                     }
                     // case $label
-                    case STRING -> {
-                        handleLabel();
-                        yield new Label();
-                    }
+                    case STRING -> handleLabel();
                     default ->
                             throw new UnsupportedOperationException("must be number or string. %s".formatted(curToken));
                 };
             }
-            case STRING -> {
-                //label
-                handleLabel();
-                yield new Label();
-            }
+            case STRING ->
+               vars.contains(curToken.lexeme()) ? handleVar()
+                       : handleLabel();
+
             default -> throw new IllegalStateException("Unexpected token value " + curToken.type());
         };
     }
 
-    private void handleLabel() {
+    private Operand handleVar() {
+        appendToCodeBuff(OperandType.VARIABLE.code, 1); // указываем что это direct
+        addLabelPosToFillLater(curToken.lexeme(), codePos); //сохраняем место куда потом нужно будет проставить физический адресс переменной
+        appendToCodeBuff(-1, 4); // это место пока заполянем числом -1
+        consume(TokenType.STRING);
+        return new Var();
+    }
+
+    private Operand handleLabel() {
         appendToCodeBuff(OperandType.MEMORY_ADDR.code, 1); // указываем что это direct
         addLabelPosToFillLater(curToken.lexeme(), codePos); //сохраняем место куда потом нужно будет проставить физический адресс метки
         appendToCodeBuff(-1, 4); // это место пока заполянем числом -1
         consume(TokenType.STRING);
+        return new Label();
     }
 
     private void addLabelPosToFillLater(final String label, final int idx) {
@@ -201,11 +207,29 @@ public final class Asm {
             case ADDL -> appendOpcode(Opcode.ADDL, 2);
             case SUBL -> appendOpcode(Opcode.SUBL, 2);
             case null -> {
-                // it is label
-                final var labelName = curToken.lexeme();
+                final var name = curToken.lexeme();
                 consume(TokenType.STRING);
                 consume(TokenType.COLON);
-                labelsToAddress.put(labelName, codePos);
+                labelsToAddress.put(name, codePos);
+
+                if (curToken.type() == TokenType.DOT) {
+                    // declare var
+                    consume(TokenType.DOT);
+                    switch (curToken.lexeme()) {
+                        // number
+                        case "long" -> {
+                            consume(TokenType.STRING);
+                            final int num = IntegerUtils.parseInt(curToken.lexeme());
+                            consume(TokenType.NUMBER);
+                            appendToCodeBuff(num, 4);
+                            if (vars.contains(name)) {
+                                throw new IllegalStateException("vars duplicate: %s".formatted(name));
+                            }
+                            vars.add(name);
+                        }
+                        default -> throw new UnsupportedOperationException();
+                    }
+                }
             }
             case INQL -> appendOpcode(Opcode.INQL, 1);
             case DECL -> appendOpcode(Opcode.DECL, 1);

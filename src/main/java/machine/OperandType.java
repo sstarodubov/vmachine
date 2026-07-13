@@ -2,7 +2,7 @@ package machine;
 
 public enum OperandType {
 
-    NUMBER((byte) 101), REGISTER((byte) 102), ASTERIX((byte) 103), MEMORY_ADDR((byte) 104);
+    NUMBER((byte) 101), REGISTER((byte) 102), ASTERIX((byte) 103), MEMORY_ADDR((byte) 104), VARIABLE((byte) 105);
 
 
     public final byte code;
@@ -18,6 +18,7 @@ public enum OperandType {
             case 102 -> REGISTER;
             case 103 -> ASTERIX;
             case 104 -> MEMORY_ADDR;
+            case 105 -> VARIABLE;
             default -> throw new RuntimeException("unknown operand type: %d".formatted(b));
         };
     }

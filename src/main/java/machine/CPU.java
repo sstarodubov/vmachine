@@ -294,6 +294,7 @@ public final class CPU {
             case REGISTER -> new Register(readTextByte());
             case ASTERIX -> new Asterix(readOperand());
             case MEMORY_ADDR -> new MemoryAddr(readTextInt());
+            case VARIABLE -> new DeclaredVar(readTextInt());
         };
     }
 
@@ -345,6 +346,7 @@ public final class CPU {
             case Number(int num) -> num;
             case Register(int id) -> regStorage.readInt(id);
             case MemoryAddr(int addr) -> addr;
+            case DeclaredVar(int addr) -> memory.readTextInt(addr);
             default -> throw new IllegalStateException("Unexpected value: " + t.from());
         };
         if (moveCondition.get()) {
