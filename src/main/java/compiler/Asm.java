@@ -249,9 +249,9 @@ public final class Asm {
         switch (curToken.lexeme()) {
             case "globl" -> {
                 consume(TokenType.STRING);
-                final String directive = curToken.lexeme();
+                final String label = curToken.lexeme();
 
-                globals.add(directive);
+                globals.add(label);
                 consume(TokenType.STRING);
             }
             case "text" -> {
