@@ -728,4 +728,94 @@ class AsmTest {
 
         assertEquals(12, cpu.statusCode);
     }
+
+
+    @Test
+    void test35() {
+        final var program = """
+                .globl _start
+    
+               .text
+               _start:
+                   movl $5, %edi       # в RDI число 5 или 00000101
+                   shll $1, %edi       # сдвигаем число в RDI на 1 разряд влево = 00000101 << 1 = 00001010 = 10
+    
+                   movl $60, %eax
+                   syscall
+               """;
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+        final int status = cpu.run(code);
+
+        assertEquals(10, cpu.statusCode);
+    }
+
+    @Test
+    void test36() {
+        final var program = """
+                .globl _start
+
+                  .text
+                  _start:
+                      movl $0x7fffffff , %eax   
+                      shll $2, %eax     
+                      jc carry_set     
+                      movl $0, %edi
+                      jmp exit
+                  carry_set:
+                      movl $1, %edi
+                  exit:
+                      movl $60, %eax
+                      syscall
+                """;
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+        final int status = cpu.run(code);
+
+        assertEquals(1, cpu.statusCode);
+    }
+
+    @Test
+    void test37() {
+        final var program = """
+                .globl _start
+               .text
+               _start:
+
+                   movl $69, %edi     # в RDI число 69 или 01000101
+                   shrl $2, %edi      # сдвигаем число в RDI на 2 разряда вправо = 01000101 >> 2 = 00010001 = 17
+
+                   movl $60, %eax
+                   syscall
+                """;
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+        final int status = cpu.run(code);
+
+        assertEquals(17, cpu.statusCode);
+    }
+
+    @Test
+    void test38() {
+        final var program = """
+                .globl _start
+    
+                .text
+                _start:
+                    movl $-32, %edi
+                    sarl $4, %edi  
+    
+                    movl $60, %eax
+                    syscall
+                """;
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+        final int status = cpu.run(code);
+
+        assertEquals(-2, cpu.statusCode);
+    }
 }

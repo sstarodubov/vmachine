@@ -60,6 +60,9 @@ public final class CPU {
             curOpcode = Opcode.fromByte(curByte);
             require(curOpcode != null, "unknown opcode: %d".formatted(curByte));
             switch (curOpcode) {
+                case SARL -> doSh((data, sh) -> data >> sh, sh -> 0x1 << Math.max(sh - 1, 0));
+                case SHRL -> doSh((data, sh) -> data >>> sh, sh -> 1 << Math.max(sh - 1, 0));
+                case SHLL -> doSh((data, sh) -> data << sh, sh -> 0x80_00_00_00 >>> Math.max(sh - 1, 0));
                 case NEGL -> doBitwise1(a -> a * -1);
                 case NOTL -> doBitwise1(a -> ~a);
                 case XORL -> doBitwise2((a, b) -> a ^ b);
@@ -395,5 +398,28 @@ public final class CPU {
         final int result = bitwiseOp.apply(val1, val2);
         bitwiseFlags(result);
         regStorage.writeInt(sec.value(), result);
+    }
+
+    void doSh(BiFunction<Integer, Integer, Integer> shFn, Function<Integer, Integer> maskFn) {
+        final var opr1 = readOperand();
+        final var opr2 = readOperand();
+        final int sh = switch (opr1) {
+            case Number(int num) -> num;
+            default -> throw new UnsupportedOperationException();
+        };
+        final int register = switch (opr2) {
+            case Register(int id) -> id;
+            default -> throw new UnsupportedOperationException();
+        };
+        final int data = regStorage.readInt(register);
+        final int result = shFn.apply(data, sh);
+        final int mask = maskFn.apply(sh);
+        final int cf = data & mask;
+        if (cf == 0) {
+            regStorage.clearCF();
+        } else {
+            regStorage.setCF();
+        }
+        regStorage.writeInt(register, result);
     }
 }

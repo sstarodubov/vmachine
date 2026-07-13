@@ -68,7 +68,7 @@ public final class Asm {
         // проставляем реальные адреса вместо меток
         for (final var entry : labelsPosition.entrySet()) {
             for (final int position : entry.getValue()) {
-                 codeBuff.putInt(position, labelsToAddress.get(entry.getKey()));
+                codeBuff.putInt(position, labelsToAddress.get(entry.getKey()));
             }
         }
     }
@@ -101,7 +101,7 @@ public final class Asm {
     }
 
     private void writeToCodeBuff(final int pos, final int data) {
-            codeBuff.putInt(pos, data);
+        codeBuff.putInt(pos, data);
     }
 
     private void appendToCodeBuff(int num, int size) {
@@ -116,7 +116,7 @@ public final class Asm {
 
     private Operand compileOperands1() {
         return switch (curToken.type()) {
-            case PERCENT ->  {
+            case PERCENT -> {
                 //case %reg
                 consume(TokenType.PERCENT);
                 require(curToken.type() == TokenType.STRING, "after percent must be name of register, but: %s".formatted(curToken));
@@ -150,7 +150,8 @@ public final class Asm {
                         handleLabel();
                         yield new Label();
                     }
-                    default -> throw new UnsupportedOperationException("must be number or string. %s".formatted(curToken));
+                    default ->
+                            throw new UnsupportedOperationException("must be number or string. %s".formatted(curToken));
                 };
             }
             case STRING -> {
@@ -170,9 +171,9 @@ public final class Asm {
     }
 
     private void addLabelPosToFillLater(final String label, final int idx) {
-       final var list = labelsPosition.getOrDefault(label, new ArrayList<>());
-       list.add(idx);
-       labelsPosition.put(label, list);
+        final var list = labelsPosition.getOrDefault(label, new ArrayList<>());
+        list.add(idx);
+        labelsPosition.put(label, list);
     }
 
     private void compileOperands2() {
@@ -187,47 +188,18 @@ public final class Asm {
 
     private void compileString() {
         switch (Opcode.fromString(curToken.lexeme())) {
-            case MOVL -> {
-                appendToCodeBuff(Opcode.MOVL.code, 1);
-                consume(TokenType.STRING);
-                compileOperands2();
-            }
-            case CMOVCL -> {
-                appendToCodeBuff(Opcode.CMOVCL.code, 1);
-                consume(TokenType.STRING);
-                compileOperands2();
-            }
-            case CMOVNCL -> {
-                appendToCodeBuff(Opcode.CMOVNCL.code, 1);
-                consume(TokenType.STRING);
-                compileOperands2();
-            }
-            case CMOVEL -> {
-                appendToCodeBuff(Opcode.CMOVEL.code, 1);
-                consume(TokenType.STRING);
-                compileOperands2();
-            }
-            case CMOVNEL -> {
-                appendToCodeBuff(Opcode.CMOVNEL.code, 1);
-                consume(TokenType.STRING);
-                compileOperands2();
-            }
+            case MOVL -> appendOpcode(Opcode.MOVL, 2);
+            case CMOVCL -> appendOpcode(Opcode.CMOVCL, 2);
+            case CMOVNCL -> appendOpcode(Opcode.CMOVNCL, 2);
+            case CMOVEL -> appendOpcode(Opcode.CMOVEL, 2);
+            case CMOVNEL -> appendOpcode(Opcode.CMOVNEL, 2);
             case SYSCALL -> {
                 appendToCodeBuff(Opcode.SYSCALL.code, 1);
                 consume(TokenType.STRING);
             }
-            case NOP ->
-                    consume(TokenType.STRING);
-            case ADDL -> {
-                appendToCodeBuff(Opcode.ADDL.code, 1);
-                consume(TokenType.STRING);
-                compileOperands2();
-            }
-            case SUBL -> {
-                appendToCodeBuff(Opcode.SUBL.code, 1);
-                consume(TokenType.STRING);
-                compileOperands2();
-            }
+            case NOP -> consume(TokenType.STRING);
+            case ADDL -> appendOpcode(Opcode.ADDL, 2);
+            case SUBL -> appendOpcode(Opcode.SUBL, 2);
             case null -> {
                 // it is label
                 final var labelName = curToken.lexeme();
@@ -235,109 +207,41 @@ public final class Asm {
                 consume(TokenType.COLON);
                 labelsToAddress.put(labelName, codePos);
             }
-            case INQL -> {
-                appendToCodeBuff(Opcode.INQL.code, 1);
-                consume(TokenType.STRING);
-                compileOperands1();
-            }
-            case DECL -> {
-                appendToCodeBuff(Opcode.DECL.code, 1);
-                consume(TokenType.STRING);
-                compileOperands1();
-            }
-            case MULL -> {
-                appendToCodeBuff(Opcode.MULL.code, 1);
-                consume(TokenType.STRING);
-                compileOperands1();
-            }
-            case JMP -> {
-                appendToCodeBuff(Opcode.JMP.code, 1);
-                consume(TokenType.STRING);
-                compileOperands1();
-            }
-            case JC -> {
-                appendToCodeBuff(Opcode.JC.code, 1);
-                consume(TokenType.STRING);
-                compileOperands1();
-            }
-            case LOOPL -> {
-                appendToCodeBuff(Opcode.LOOPL.code, 1);
-                consume(TokenType.STRING);
-                compileOperands1();
-            }
-            case JZ -> {
-                appendToCodeBuff(Opcode.JZ.code, 1);
-                consume(TokenType.STRING);
-                compileOperands1();
-            }
-            case JNZ -> {
-                appendToCodeBuff(Opcode.JNZ.code, 1);
-                consume(TokenType.STRING);
-                compileOperands1();
-            }
-            case CMPL -> {
-                appendToCodeBuff(Opcode.CMPL.code, 1);
-                consume(TokenType.STRING);
-                compileOperands2();
-            }
-            case JE -> {
-                appendToCodeBuff(Opcode.JE.code, 1);
-                consume(TokenType.STRING);
-                compileOperands1();
-            }
-            case JNE -> {
-                appendToCodeBuff(Opcode.JNE.code, 1);
-                consume(TokenType.STRING);
-                compileOperands1();
-            }
-            case JG -> {
-                appendToCodeBuff(Opcode.JG.code, 1);
-                consume(TokenType.STRING);
-                compileOperands1();
-            }
-            case JGE -> {
-                appendToCodeBuff(Opcode.JGE.code, 1);
-                consume(TokenType.STRING);
-                compileOperands1();
-            }
-            case JL -> {
-                appendToCodeBuff(Opcode.JL.code, 1);
-                consume(TokenType.STRING);
-                compileOperands1();
-            }
-            case JLE -> {
-                appendToCodeBuff(Opcode.JLE.code, 1);
-                consume(TokenType.STRING);
-                compileOperands1();
-            }
-            case ANDL -> {
-                appendToCodeBuff(Opcode.ANDL.code, 1);
-                consume(TokenType.STRING);
-                compileOperands2();
-            }
-            case ORL -> {
-                appendToCodeBuff(Opcode.ORL.code, 1);
-                consume(TokenType.STRING);
-                compileOperands2();
-            }
-            case XORL -> {
-                appendToCodeBuff(Opcode.XORL.code, 1);
-                consume(TokenType.STRING);
-                compileOperands2();
-            }
-            case NOTL -> {
-                appendToCodeBuff(Opcode.NOTL.code, 1);
-                consume(TokenType.STRING);
-                compileOperands1();
-            }
-            case NEGL -> {
-                appendToCodeBuff(Opcode.NEGL.code, 1);
-                consume(TokenType.STRING);
-                compileOperands1();
-            }
+            case INQL -> appendOpcode(Opcode.INQL, 1);
+            case DECL -> appendOpcode(Opcode.DECL, 1);
+            case MULL -> appendOpcode(Opcode.MULL, 1);
+            case JMP -> appendOpcode(Opcode.JMP, 1);
+            case JC -> appendOpcode(Opcode.JC, 1);
+            case LOOPL -> appendOpcode(Opcode.LOOPL, 1);
+            case JZ -> appendOpcode(Opcode.JZ, 1);
+            case JNZ -> appendOpcode(Opcode.JNZ, 1);
+            case CMPL -> appendOpcode(Opcode.CMPL, 2);
+            case JE -> appendOpcode(Opcode.JE, 1);
+            case JNE -> appendOpcode(Opcode.JNE, 1);
+            case JG -> appendOpcode(Opcode.JG, 1);
+            case JGE -> appendOpcode(Opcode.JGE, 1);
+            case JL -> appendOpcode(Opcode.JL, 1);
+            case JLE -> appendOpcode(Opcode.JLE, 1);
+            case ANDL -> appendOpcode(Opcode.ANDL, 2);
+            case ORL -> appendOpcode(Opcode.ORL, 2);
+            case XORL -> appendOpcode(Opcode.XORL, 2);
+            case NOTL -> appendOpcode(Opcode.NOTL, 1);
+            case NEGL -> appendOpcode(Opcode.NEGL, 1);
+            case SHLL -> appendOpcode(Opcode.SHLL, 2);
+            case SHRL -> appendOpcode(Opcode.SHRL, 2);
+            case SARL -> appendOpcode(Opcode.SARL, 2);
         }
     }
 
+    private void appendOpcode(final Opcode opcode, final int operCount) {
+        appendToCodeBuff(opcode.code, 1);
+        consume(TokenType.STRING);
+        switch (operCount) {
+            case 1 -> compileOperands1();
+            case 2 -> compileOperands2();
+            default -> throw new UnsupportedOperationException();
+        }
+    }
 
     private void compileDot() {
         consume(TokenType.DOT);
