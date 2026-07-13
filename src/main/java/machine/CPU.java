@@ -60,16 +60,16 @@ public final class CPU {
             curOpcode = Opcode.fromByte(curByte);
             require(curOpcode != null, "unknown opcode: %d".formatted(curByte));
             switch (curOpcode) {
-                case CMOVNCL ->
-                    doMoveIf(() -> !regStorage.readCF());
-                case CMOVCL ->
-                    doMoveIf(regStorage::readCF);
-                case Opcode.MOVL ->
-                    doMoveIf(() -> true);
-                case CMOVEL ->
-                    doMoveIf(regStorage::readZF);
-                case CMOVNEL ->
-                    doMoveIf(() -> !regStorage.readZF());
+                case NEGL -> doBitwise1(a -> a * -1);
+                case NOTL -> doBitwise1(a -> ~a);
+                case XORL -> doBitwise2((a, b) -> a ^ b);
+                case ORL -> doBitwise2((a, b) -> a | b);
+                case ANDL -> doBitwise2((a, b) -> a & b);
+                case CMOVNCL -> doMoveIf(() -> !regStorage.readCF());
+                case CMOVCL -> doMoveIf(regStorage::readCF);
+                case Opcode.MOVL -> doMoveIf(() -> true);
+                case CMOVEL -> doMoveIf(regStorage::readZF);
+                case CMOVNEL -> doMoveIf(() -> !regStorage.readZF());
                 case Opcode.SYSCALL -> {
                     final int syscallId = regStorage.readEax();
                     sysCallTable.executeOn(this, syscallId);
@@ -96,7 +96,7 @@ public final class CPU {
                     regStorage.writeInt(register, data);
                 }
                 case Opcode.DECL -> {
-                    final SingleTransfer t = prepareIncrementTransfer( a -> a - 1);
+                    final SingleTransfer t = prepareIncrementTransfer(a -> a - 1);
                     final int data = t.from().value();
                     final int register = t.to().value();
                     regStorage.writeInt(register, data);
@@ -125,29 +125,29 @@ public final class CPU {
                     final Operand operand = readOperand();
                     regStorage.writeEcx(regStorage.readEcx() - 1);
                     if (regStorage.readEcx() != 0) {
-                       doJump(operand);
+                        doJump(operand);
                     }
                 }
                 case JMP -> {
-                     final Operand operand = readOperand();
-                     doJump(operand);
+                    final Operand operand = readOperand();
+                    doJump(operand);
                 }
                 case JC -> {
-                     final Operand operand = readOperand();
-                     if (regStorage.readCF()) {
+                    final Operand operand = readOperand();
+                    if (regStorage.readCF()) {
                         doJump(operand);
-                     }
+                    }
                 }
                 case JZ -> {
                     final Operand operand = readOperand();
                     if (regStorage.readZF()) {
-                         doJump(operand);
+                        doJump(operand);
                     }
                 }
                 case JNZ -> {
                     final Operand operand = readOperand();
                     if (!regStorage.readZF()) {
-                         doJump(operand);
+                        doJump(operand);
                     }
                 }
                 case CMPL -> {
@@ -184,17 +184,17 @@ public final class CPU {
                         regStorage.clearCF();
                     }
 
-                    if (diff > Integer.MAX_VALUE || diff < Integer.MIN_VALUE ) {
+                    if (diff > Integer.MAX_VALUE || diff < Integer.MIN_VALUE) {
                         regStorage.setOF();
                     } else {
                         regStorage.clearOF();
                     }
                 }
                 case JE -> {
-                   final var oper = readOperand();
-                   if (regStorage.readZF()) {
-                       doJump(oper);
-                   }
+                    final var oper = readOperand();
+                    if (regStorage.readZF()) {
+                        doJump(oper);
+                    }
                 }
                 case JNE -> {
                     final var oper = readOperand();
@@ -216,13 +216,13 @@ public final class CPU {
                 }
                 case JL -> {
                     final var oper = readOperand();
-                    if(regStorage.readCF() != regStorage.readOF()) {
+                    if (regStorage.readCF() != regStorage.readOF()) {
                         doJump(oper);
                     }
                 }
                 case JLE -> {
                     final var oper = readOperand();
-                    if(regStorage.readCF() != regStorage.readOF() && regStorage.readZF()) {
+                    if (regStorage.readCF() != regStorage.readOF() && regStorage.readZF()) {
                         doJump(oper);
                     }
                 }
@@ -245,12 +245,12 @@ public final class CPU {
     }
 
     private int resolve(final Operand op) {
-       return switch (op) {
-           case Asterix(Operand p) -> resolve(p);
-           case Register(int id) -> regStorage.readInt(id);
-           case MemoryAddr(int addr) -> memory.readTextInt(addr);
-           default -> throw new UnsupportedOperationException();
-       };
+        return switch (op) {
+            case Asterix(Operand p) -> resolve(p);
+            case Register(int id) -> regStorage.readInt(id);
+            case MemoryAddr(int addr) -> memory.readTextInt(addr);
+            default -> throw new UnsupportedOperationException();
+        };
     }
 
     private Transfer prepareMullTransfer() {
@@ -348,5 +348,52 @@ public final class CPU {
             final int register = t.to().value();
             regStorage.writeInt(register, data);
         }
+    }
+
+    void doBitwise1(final Function<Integer, Integer> bitwiseOp) {
+        final Operand first = readOperand();
+
+        final int val1 = switch (first) {
+            case Register(int id) -> regStorage.readInt(id);
+            default -> throw new UnsupportedOperationException();
+        };
+
+        final int result = bitwiseOp.apply(val1);
+        bitwiseFlags(result);
+
+        regStorage.writeInt(first.value(), result);
+    }
+
+    void bitwiseFlags(int result) {
+        regStorage.clearCF();
+        regStorage.clearOF();
+        if (result == 0) {
+            regStorage.setZF();
+        } else {
+            regStorage.clearZF();
+        }
+        if (result < 0) {
+            regStorage.setSF();
+        } else {
+            regStorage.clearSF();
+        }
+    }
+
+    void doBitwise2(final BiFunction<Integer, Integer, Integer> bitwiseOp) {
+        final Operand first = readOperand();
+        final Operand sec = readOperand();
+
+        final int val1 = switch (first) {
+            case Number(int n) -> n;
+            case Register(int id) -> regStorage.readInt(id);
+            default -> throw new UnsupportedOperationException();
+        };
+        final int val2 = switch (sec) {
+            case Register(int id) -> regStorage.readInt(id);
+            default -> throw new UnsupportedOperationException();
+        };
+        final int result = bitwiseOp.apply(val1, val2);
+        bitwiseFlags(result);
+        regStorage.writeInt(sec.value(), result);
     }
 }

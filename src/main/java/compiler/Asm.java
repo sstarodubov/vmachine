@@ -310,6 +310,31 @@ public final class Asm {
                 consume(TokenType.STRING);
                 compileOperands1();
             }
+            case ANDL -> {
+                appendToCodeBuff(Opcode.ANDL.code, 1);
+                consume(TokenType.STRING);
+                compileOperands2();
+            }
+            case ORL -> {
+                appendToCodeBuff(Opcode.ORL.code, 1);
+                consume(TokenType.STRING);
+                compileOperands2();
+            }
+            case XORL -> {
+                appendToCodeBuff(Opcode.XORL.code, 1);
+                consume(TokenType.STRING);
+                compileOperands2();
+            }
+            case NOTL -> {
+                appendToCodeBuff(Opcode.NOTL.code, 1);
+                consume(TokenType.STRING);
+                compileOperands1();
+            }
+            case NEGL -> {
+                appendToCodeBuff(Opcode.NEGL.code, 1);
+                consume(TokenType.STRING);
+                compileOperands1();
+            }
         }
     }
 

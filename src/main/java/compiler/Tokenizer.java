@@ -1,10 +1,13 @@
 package compiler;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class Tokenizer {
     private final String input;
     int pos;
+
+    private static final Pattern digitPattern = Pattern.compile("^[+-]?\\d+$");
     private final List<Character> hexChars = List.of(
             'a', 'b', 'c', 'd', 'e', 'f'
     );
@@ -31,7 +34,7 @@ public class Tokenizer {
         return switch (cur) {
             case '#' -> {
                 pos++;
-                yield  new Token(TokenType.HASHTAG, "#");
+                yield new Token(TokenType.HASHTAG, "#");
             }
             case '.' -> {
                 pos++;
@@ -86,9 +89,17 @@ public class Tokenizer {
         while (pos < input.length() && !Character.isWhitespace(input.charAt(pos)) && input.charAt(pos) != ':'
                 && input.charAt(pos) != ','
         ) {
-           lexeme.append(input.charAt(pos++));
+            lexeme.append(input.charAt(pos++));
         }
+        final var result = lexeme.toString();
+        if ((result.startsWith("+") || result.startsWith("-")) && isSignInteger(result)) {
+            return new Token(TokenType.NUMBER, result);
+        }
+        return new Token(TokenType.STRING, result);
+    }
 
-        return new Token(TokenType.STRING, lexeme.toString());
+    private boolean isSignInteger(final String s) {
+        if (s == null || s.trim().isEmpty()) return false;
+        return digitPattern.asMatchPredicate().test(s);
     }
 }

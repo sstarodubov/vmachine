@@ -30,7 +30,12 @@ public enum Opcode {
     CMOVCL((byte) 20, "cmovcl"),
     CMOVNEL((byte) 21, "cmovnel"),
     CMOVEL((byte) 22, "cmovel"),
-    LOOPL((byte) 23, "loopl");
+    LOOPL((byte) 23, "loopl"),
+    ANDL((byte) 24, "andl"),
+    ORL((byte) 25, "orl"),
+    XORL((byte) 26, "xorl"),
+    NOTL((byte) 27, "notl"),
+    NEGL((byte) 28, "negl");
 
 
     public final byte code;

@@ -613,4 +613,119 @@ class AsmTest {
 
         assertEquals(10, cpu.statusCode);
     }
+
+
+    @Test
+    void test30() {
+        final var program = """
+                .globl _start
+                
+               .text
+               _start:
+
+                   movl $12, %edi       # помещаем в регистр RDI число 12 - 1100
+                   andl $6, %edi        # rdi = rdi AND 6 = 1100 AND 0110 = 0100 = 4
+
+                   movl $60, %eax
+                   syscall
+               """;
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+        final int status = cpu.run(code);
+
+        assertEquals(4, cpu.statusCode);
+    }
+
+
+    @Test
+    void test31() {
+        final var program = """
+                .globl _start
+    
+                .text
+                _start:
+                    movl $12, %edi      # помещаем в регистр rdi  число 12 - 1100
+                    orl $6, %edi        # rdi = rdi OR 6 = 1100 OR 0110 = 1110 = 14
+    
+                    movl $60, %eax
+                    syscall
+               """;
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+        final int status = cpu.run(code);
+
+        assertEquals(14, cpu.statusCode);
+    }
+
+
+    @Test
+    void test32() {
+        final var program = """
+                .globl _start
+    
+                 .text
+                 _start:
+    
+                     movl $12, %edi      # помещаем в регистр rdi  число 12 - 1100
+                     xorl $6, %edi       # rdi = rdi XOR 6 = 1100 XOR 0110 = 1010 = 10
+    
+                     movl $60, %eax
+                     syscall
+               """;
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+        final int status = cpu.run(code);
+
+        assertEquals(10, cpu.statusCode);
+    }
+
+
+    @Test
+    void test33() {
+        final var program = """
+                .globl _start
+    
+                  .text
+                  _start:
+    
+                      xorl %edi, %edi    # rdi = 0
+                      movl $12, %edi     # помещаем в регистр rdi число 12 - 00000000 00000000 00000000 00001100
+                      notl %edi          # rdi =NOT(rdi)=NOT(12)= 11111111 11111111 11111111 11110011
+    
+                      movl $60, %eax
+                      syscall
+               """;
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+        final int status = cpu.run(code);
+
+        assertEquals(-13, cpu.statusCode);
+    }
+
+
+    @Test
+    void test34() {
+        final var program = """
+              .globl _start
+
+              .text
+              _start:
+
+                  movl $-12, %edi
+                  negl %edi        # rdi = -1 * rdi = -1 * -12 = 12
+
+                  movl $60, %eax
+                  syscall
+               """;
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+        final int status = cpu.run(code);
+
+        assertEquals(12, cpu.statusCode);
+    }
 }
