@@ -70,35 +70,35 @@ public final class CPU {
                 case ANDL -> doBitwise2((a, b) -> a & b);
                 case CMOVNCL -> doMoveIf(() -> !regStorage.readCF());
                 case CMOVCL -> doMoveIf(regStorage::readCF);
-                case Opcode.MOVL -> doMoveIf(() -> true);
+                case MOVL -> doMoveIf(() -> true);
                 case CMOVEL -> doMoveIf(regStorage::readZF);
                 case CMOVNEL -> doMoveIf(() -> !regStorage.readZF());
-                case Opcode.SYSCALL -> {
+                case SYSCALL -> {
                     final int syscallId = regStorage.readEax();
                     sysCallTable.executeOn(this, syscallId);
                 }
-                case Opcode.NOP -> {
+                case NOP -> {
                     // skip
                 }
-                case Opcode.ADDL -> {
+                case ADDL -> {
                     final SingleTransfer t = prepareMathOpTransfer(Long::sum);
                     final int data = t.from().value();
                     final int register = t.to().value();
                     regStorage.writeInt(register, data);
                 }
-                case Opcode.SUBL -> {
+                case SUBL -> {
                     final SingleTransfer t = prepareMathOpTransfer((a, b) -> b - a);
                     final int data = t.from().value();
                     final int register = t.to().value();
                     regStorage.writeInt(register, data);
                 }
-                case Opcode.INQL -> {
+                case INQL -> {
                     final SingleTransfer t = prepareIncrementTransfer(a -> a + 1);
                     final int data = t.from().value();
                     final int register = t.to().value();
                     regStorage.writeInt(register, data);
                 }
-                case Opcode.DECL -> {
+                case DECL -> {
                     final SingleTransfer t = prepareIncrementTransfer(a -> a - 1);
                     final int data = t.from().value();
                     final int register = t.to().value();
@@ -294,7 +294,7 @@ public final class CPU {
             case REGISTER -> new Register(readTextByte());
             case ASTERIX -> new Asterix(readOperand());
             case MEMORY_ADDR -> new MemoryAddr(readTextInt());
-            case VARIABLE -> new DeclaredVar(readTextInt());
+            case VARIABLE -> new Variable(readTextInt());
         };
     }
 
@@ -335,7 +335,7 @@ public final class CPU {
         final Operand first = readOperand();
         final Operand second = readOperand();
 
-        require(second instanceof Register, "mov. 2's operand must be register");
+        require(second instanceof Register || second instanceof Variable, "mov. 2's operand must be register");
 
         return new SingleTransfer(first, second);
     }
@@ -346,12 +346,15 @@ public final class CPU {
             case Number(int num) -> num;
             case Register(int id) -> regStorage.readInt(id);
             case MemoryAddr(int addr) -> addr;
-            case DeclaredVar(int addr) -> memory.readTextInt(addr);
+            case Variable(int addr) -> memory.readTextInt(addr);
             default -> throw new IllegalStateException("Unexpected value: " + t.from());
         };
         if (moveCondition.get()) {
-            final int register = t.to().value();
-            regStorage.writeInt(register, data);
+            switch (t.to()) {
+                case Register(int id) -> regStorage.writeInt(id, data);
+                case Variable(int addr) -> memory.writeInt(addr, data);
+                default -> throw new UnsupportedOperationException();
+            }
         }
     }
 

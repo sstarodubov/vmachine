@@ -840,4 +840,28 @@ class AsmTest {
 
         assertEquals(123, cpu.statusCode);
     }
+
+    @Test
+    void test40() {
+        final var program = """
+                .globl _start
+    
+                 .data
+                 number: .long 123       # переменная number в секции .data
+    
+                 .text
+                 _start:
+                     movl $67, %eax      # помещаем в AL число 67
+                     movl %eax, number   # помещаем число из AL в переменную number
+                     movl number, %edi  # помещаем число значение переменной number в RDI
+                     movl $60, %eax
+                     syscall
+                """;
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+        final int status = cpu.run(code);
+
+        assertEquals(67, cpu.statusCode);
+    }
 }

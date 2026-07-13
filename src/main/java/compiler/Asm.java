@@ -152,9 +152,8 @@ public final class Asm {
                             throw new UnsupportedOperationException("must be number or string. %s".formatted(curToken));
                 };
             }
-            case STRING ->
-               vars.contains(curToken.lexeme()) ? handleVar()
-                       : handleLabel();
+            case STRING -> vars.contains(curToken.lexeme()) ? handleVar()
+                    : handleLabel();
 
             default -> throw new IllegalStateException("Unexpected token value " + curToken.type());
         };
@@ -188,7 +187,8 @@ public final class Asm {
         consume(TokenType.COMMA);
 
         final Operand second = compileOperands1();
-        require(second instanceof Register, "second operator must be register");
+        require(second instanceof Register || second instanceof Var,
+                "second operator must be register or variable");
     }
 
 

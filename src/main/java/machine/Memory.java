@@ -29,25 +29,22 @@ public final class Memory {
     }
 
     public void writeInt(final int offset, final int data) {
+        Assertions.require(offset >= dataSegStartIdx, "seg fault: %d".formatted(offset));
+        Assertions.require(offset <= dataSegEndIdx, "seg fault: %d".formatted(offset));
+
         this.mem.putInt(offset, data);
     }
 
     public byte readTextByte(final int offset) {
-        Assertions.require(offset >= textSegStartIdx, "seg fault: %d".formatted(offset));
-        Assertions.require(offset <= textSegEndIdx, "seg fault: %d".formatted(offset));
         return mem.get(offset);
     }
 
     public short readTextShort(final int offset) {
-        Assertions.require(offset <= textSegEndIdx, "seg fault: %d".formatted(offset));
-        Assertions.require(offset >= textSegStartIdx, "seg fault: %d".formatted(offset));
         return mem.getShort(offset);
     }
 
 
     public int readTextInt(final int offset) {
-        Assertions.require(offset <= textSegEndIdx, "seg fault: %d".formatted(offset));
-        Assertions.require(offset >= textSegStartIdx, "seg fault: %d".formatted(offset));
         return mem.getInt(offset);
     }
 
