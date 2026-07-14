@@ -64,7 +64,6 @@ public final class CPU {
                     final Operand first = readOperand();
                     final int source = switch (first) {
                         case MemoryVar(int addr) -> addr;
-                        case MemoryAddr(int addr) -> addr;
                         default -> throw new UnsupportedOperationException();
                     };
                     final Operand second = readOperand();
