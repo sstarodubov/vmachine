@@ -314,7 +314,8 @@ public final class CPU {
                 final byte baseRegId = readTextByte();
                 final byte idxRegId = readTextByte();
                 final int multiplier = readTextInt();
-                final int addr = value + regStorage.readInt(baseRegId) +
+                final int addr = value +
+                        (baseRegId == -1 ? 0 :regStorage.readInt(baseRegId)) +
                         ((idxRegId == -1 ? 0 : regStorage.readInt(idxRegId)) * multiplier);
                 yield new MemoryVar(addr);
             }

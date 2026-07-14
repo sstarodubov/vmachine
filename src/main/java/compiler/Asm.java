@@ -130,36 +130,51 @@ public final class Asm {
      */
     private Operand createInDirectAddrOperand(final int value) {
         consume(TokenType.OPEN_PARENTHESIS);
+        int baseReg = -1;
+        int idxReg = -1;
+        int multiplier = 0;
 
-        consume(TokenType.PERCENT);
-        final int baseReg = RegStorage.registerIdFromName(curToken.lexeme());
-        consume(TokenType.STRING);
-        final int idxReg = curToken.type() == TokenType.COMMA ? createIdxReg() : -1;
-        final int multiplier = curToken.type() == TokenType.COMMA ? createMultiplier() : 0;
+        if (curToken.type() == TokenType.PERCENT) {
+            consume(TokenType.PERCENT);
+            baseReg = RegStorage.registerIdFromName(curToken.lexeme());
+            consume(TokenType.STRING);
+        }
 
+        if (curToken.type() == TokenType.CLOSE_PARENTHESIS) {
+            consume(TokenType.CLOSE_PARENTHESIS);
+            appendInDirectAddrOperand(value, baseReg, idxReg, multiplier);
+            return new IndirectAddr();
+        }
+
+        consume(TokenType.COMMA);
+        if (curToken.type() == TokenType.PERCENT) {
+            consume(TokenType.PERCENT);
+            idxReg = RegStorage.registerIdFromName(curToken.lexeme());
+            consume(TokenType.STRING);
+        }
+
+        if (curToken.type() == TokenType.CLOSE_PARENTHESIS) {
+            consume(TokenType.CLOSE_PARENTHESIS);
+            appendInDirectAddrOperand(value, baseReg, idxReg, multiplier);
+            return new IndirectAddr();
+        }
+
+        consume(TokenType.COMMA);
+
+       multiplier = IntegerUtils.parseInt(curToken.lexeme());
+       consume(TokenType.NUMBER);
+       appendInDirectAddrOperand(value, baseReg, idxReg, multiplier);
+       consume(TokenType.CLOSE_PARENTHESIS);
+
+       return new IndirectAddr();
+    }
+
+    private void appendInDirectAddrOperand(final int value, final int baseReg, final int idxReg, final int multiplier) {
         appendToCodeBuff(OperandType.INDIRECT_ADDR.code, 1);
         appendToCodeBuff(value , 4);
         appendToCodeBuff(baseReg, 1);
         appendToCodeBuff(idxReg, 1);
         appendToCodeBuff(multiplier, 4);
-        consume(TokenType.CLOSE_PARENTHESIS);
-        return new IndirectAddr();
-    }
-
-    private int createMultiplier() {
-        consume(TokenType.COMMA);
-        final int multiplier = IntegerUtils.parseInt(curToken.lexeme());
-        consume(TokenType.NUMBER);
-        return multiplier;
-    }
-
-    private int createIdxReg() {
-        consume(TokenType.COMMA);
-        consume(TokenType.PERCENT);
-        final int register = RegStorage.registerIdFromName(curToken.lexeme());
-        consume(TokenType.STRING);
-        require(register != -1, "unknown register: " + curToken.lexeme());
-        return register;
     }
 
     private Operand createRegisterOperand() {
@@ -203,32 +218,50 @@ public final class Asm {
                         yield new Number(num);
                     }
                     // case $label
-                    case STRING -> createLabelOperand();
+                    case STRING -> {
+                        appendLabelOperand(curToken.lexeme());
+                        consume(TokenType.STRING);
+                        yield new Label();
+                    }
                     default ->
                             throw new UnsupportedOperationException("must be number or string. %s".formatted(curToken));
                 };
             }
-            case STRING -> vars.contains(curToken.lexeme()) ? createVarOperand()
-                    : createLabelOperand();
+            case STRING -> {
+                final var str = curToken.lexeme();
+                consume(TokenType.STRING);
+                //case indirect addr
+                if (curToken.type() == TokenType.OPEN_PARENTHESIS) {
+                    final int varPos = labelsToAddress.getOrDefault(str, -1);
+                    require(varPos != -1, "variable '%s' must exists");
+                    createInDirectAddrOperand(varPos);
+                    yield new IndirectAddr();
+                }
+                // case varialbe
+                if (vars.contains(str)) {
+                    appendVarOperand(str);
+                    yield new Var();
+                } else {
+                    //case label
+                    appendLabelOperand(str);
+                    yield new Label();
+                }
+            }
 
             default -> throw new IllegalStateException("Unexpected token value " + curToken.type());
         };
     }
 
-    private Operand createVarOperand() {
+    private void appendVarOperand(final String varName) {
         appendToCodeBuff(OperandType.VARIABLE.code, 1); // указываем что это переменная
-        addLabelPosToFillLater(curToken.lexeme(), codePos); //сохраняем место куда потом нужно будет проставить физический адресс переменной
+        addLabelPosToFillLater(varName, codePos); //сохраняем место куда потом нужно будет проставить физический адресс переменной
         appendToCodeBuff(-1, 4); // это место пока заполянем числом -1
-        consume(TokenType.STRING);
-        return new Var();
     }
 
-    private Operand createLabelOperand() {
+    private void appendLabelOperand(final String label) {
         appendToCodeBuff(OperandType.DIRECT_ADDR.code, 1); // указываем что это direct
-        addLabelPosToFillLater(curToken.lexeme(), codePos); //сохраняем место куда потом нужно будет проставить физический адресс метки
+        addLabelPosToFillLater(label, codePos); //сохраняем место куда потом нужно будет проставить физический адресс метки
         appendToCodeBuff(-1, 4); // это место пока заполянем числом -1
-        consume(TokenType.STRING);
-        return new Label();
     }
 
     private void addLabelPosToFillLater(final String label, final int idx) {

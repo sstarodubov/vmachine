@@ -1052,4 +1052,51 @@ class AsmTest {
 
         assertEquals(13, cpu.statusCode);
     }
+
+    @Test
+    void test49() {
+        final var program = """
+               .globl _start
+               .data
+               nums: .long 111, 112, 113, 114, 115, 116
+    
+               .text
+               _start:
+                   movl $nums, %ebx            # в RBX адрес массива nums, RBX - базовый регистр
+                   movl $2, %esi               # RSI - индексный регистр  
+                   movl (%ebx, %esi, 4), %edi  # в RDI число по адресу (RBX + RSI * 8)
+    
+                   movl $60, %eax
+                   syscall
+           """;
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+        cpu.run(code);
+
+        assertEquals(113, cpu.statusCode);
+    }
+
+    @Test
+    void test50() {
+        final var program = """
+              .globl _start
+               .data
+               nums: .long 11, 12, 13, 14, 15, 16
+
+               .text
+               _start:
+                   movl $2, %esi               # RSI - индексный регистр   \s
+                   movl nums(, %esi, 4), %edi  # в RDI число по адресу ($nums + RSI * 4)
+
+                   movl $60, %eax
+                   syscall
+           """;
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+        cpu.run(code);
+
+        assertEquals(13, cpu.statusCode);
+    }
 }
