@@ -3,6 +3,7 @@ package machine;
 
 import machine.syscalls.SysCall;
 import machine.syscalls.SysExit;
+import machine.syscalls.SysWrite;
 
 import static machine.utils.Assertions.require;
 
@@ -12,6 +13,7 @@ public final class SysCallTable {
     public SysCallTable() {
         syscalls = new SysCall[127];
         registerSysCall(new SysExit());
+        registerSysCall(new SysWrite());
     }
 
     private void registerSysCall(final SysCall sysCall) {

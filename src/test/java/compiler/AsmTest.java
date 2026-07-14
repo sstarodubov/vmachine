@@ -3,6 +3,8 @@ package compiler;
 import machine.CPU;
 import org.junit.jupiter.api.Test;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.nio.ByteBuffer;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -1186,5 +1188,37 @@ class AsmTest {
         cpu.run(code);
 
         assertEquals(68, cpu.statusCode);
+    }
+
+    @Test
+    void test55() {
+        final var origin = System.out;
+        try(var out = new ByteArrayOutputStream()) {
+            System.setOut(new PrintStream(out));
+            final var program = """
+               .globl _start
+               .data
+               message: .asciz "Hello METANIT.COM"   # текст выводимого сообщения
+               count: .long .- message                      # длина сообщения
+
+               .text
+               _start:
+                   movl $message, %esi  # в RSI - адрес строки
+                   movl $1, %edi        # в RDI - дексриптор вывода в стандартный поток (консоль)
+                   movl count, %edx    # в RDX - длина строки
+                   movl $1, %eax        # в RAX - номер функции для вывода в поток\s
+                   syscall              # вызываем функцию Linux
+           """;
+
+            final var asm = new Asm(program);
+            final ByteBuffer code = asm.compile();
+            final var cpu = new CPU();
+            cpu.run(code);
+
+            assertEquals("Hello METANIT.COM\n", out.toString());
+            System.setOut(origin);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

@@ -14,7 +14,7 @@ import static machine.utils.Assertions.require;
 
 public final class CPU {
 
-    private final Memory memory;
+    public final Memory memory;
     private final SysCallTable sysCallTable;
     public final RegStorage regStorage;
 

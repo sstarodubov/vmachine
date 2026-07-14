@@ -365,6 +365,19 @@ public final class Asm {
     private void declareVariable(final String name) {
         consume(TokenType.DOT);
         switch (curToken.lexeme()) {
+            // string literal
+            case "asciz" -> {
+                consume(TokenType.STRING);
+                require(curToken.type() == TokenType.STR_LITERAL, "asciz must be string literal");
+                final String s = curToken.lexeme();
+                byte b;
+                for (int i = 0; i < s.length(); i++) {
+                    b = (byte) s.charAt(i);
+                    appendToCodeBuff(b, 1);
+                }
+
+                consume(TokenType.STR_LITERAL);
+            }
             // number
             case "long" -> {
                 consume(TokenType.STRING);

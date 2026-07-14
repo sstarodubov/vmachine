@@ -37,6 +37,15 @@ public class Tokenizer {
                 pos+=2;
                 yield token;
             }
+            case '\"' -> {
+                pos++;
+                final var sb= new StringBuilder();
+                while(pos < input.length() && input.charAt(pos) != '\"') {
+                    sb.append(input.charAt(pos++));
+                }
+                pos++;
+                yield new Token(TokenType.STR_LITERAL, sb.toString());
+            }
             case '#' -> {
                 pos++;
                 yield new Token(TokenType.HASHTAG, "#");
