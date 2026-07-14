@@ -26,6 +26,7 @@ public final class Asm {
     private final Map<String, Integer> labelsToAddress = new HashMap<>();
     private final Map<String, List<Integer>> labelsPosition = new HashMap<>();
     private final Set<String> vars = new HashSet<>();
+    private final Map<String, Integer> constants = new HashMap<>();
 
     int codePos = 32  /*32 bytes for header*/;
     int textSegStart = -1;
@@ -217,11 +218,22 @@ public final class Asm {
                         consume(TokenType.NUMBER);
                         yield new Number(num);
                     }
-                    // case $label
                     case STRING -> {
-                        appendLabelOperand(curToken.lexeme());
-                        consume(TokenType.STRING);
-                        yield new Label();
+                        final String name = curToken.lexeme();
+                        final boolean isConstant = constants.containsKey(name);
+                        // case constant
+                        if (isConstant) {
+                           appendToCodeBuff(OperandType.NUMBER.code, 1);
+                           appendToCodeBuff(constants.get(name), 4);
+                           consume(TokenType.STRING);
+                           yield new Number(constants.get(name));
+                        } else {
+                            // case $label
+                            appendLabelOperand(curToken.lexeme());
+                            consume(TokenType.STRING);
+                            yield new Label();
+                        }
+
                     }
                     case SYMBOL -> {
                         require(curToken.lexeme().length() == 1, "symbol size must be 1");
@@ -445,6 +457,16 @@ public final class Asm {
         consume(TokenType.DOT);
         require(curToken.type() == TokenType.STRING, "after '.' symbol must be string. But: %s".formatted(curToken));
         switch (curToken.lexeme()) {
+            case "equ" -> {
+                consume(TokenType.STRING);
+                final String constantName = curToken.lexeme();
+                consume(TokenType.STRING);
+                consume(TokenType.COMMA);
+                require(curToken.type() == TokenType.NUMBER, "constant must be a number");
+                final int num = IntegerUtils.parseInt(curToken.lexeme());
+                consume(TokenType.NUMBER);
+                constants.put(constantName, num);
+            }
             case "globl" -> {
                 consume(TokenType.STRING);
                 final String label = curToken.lexeme();

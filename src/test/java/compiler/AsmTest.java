@@ -1221,4 +1221,28 @@ class AsmTest {
             throw new RuntimeException(e);
         }
     }
+
+    @Test
+    void test56() {
+        final var program = """
+            .globl _start
+            .equ var1, 1
+            .equ var2, 2
+            .equ var3, 3
+
+            .text
+            _start:
+                movl $var1, %edi    # RDI = 1
+                addl $var2, %edi    # RDI = RDI + 2 = 3
+                addl $var3, %edi    # RDI = RDI + 3 = 6
+                movl $60, %eax
+                syscall
+           """;
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+        cpu.run(code);
+
+        assertEquals(6, cpu.statusCode);
+    }
 }
