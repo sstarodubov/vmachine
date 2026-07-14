@@ -6,8 +6,8 @@ import java.util.stream.Collectors;
 
 public enum OperandType {
 
-    NUMBER((byte) 101), REGISTER((byte) 102), ASTERIX((byte) 103), DIRECT_ADDR((byte) 104), VARIABLE((byte) 105),
-    INDIRECT_ADDR((byte) 106);
+    NUMBER((byte) 101), REGISTER((byte) 102), ASTERIX((byte) 103),
+    DIRECT_ADDR((byte) 104), VARIABLE((byte) 105), INDIRECT_ADDR((byte) 106);
 
 
     public final byte code;

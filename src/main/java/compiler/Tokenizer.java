@@ -32,6 +32,11 @@ public class Tokenizer {
         final char cur = input.charAt(pos);
 
         return switch (cur) {
+            case '\'' -> {
+                final var token = new Token(TokenType.SYMBOL, "" + input.charAt(++pos));
+                pos+=2;
+                yield token;
+            }
             case '#' -> {
                 pos++;
                 yield new Token(TokenType.HASHTAG, "#");

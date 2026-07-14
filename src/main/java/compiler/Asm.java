@@ -35,7 +35,7 @@ public final class Asm {
 
     public Asm(final String program) {
         this.tokenizer = new Tokenizer(program);
-        this.codeBuff = ByteBuffer.allocate(128);
+        this.codeBuff = ByteBuffer.allocate(256);
     }
 
     private void consume(final TokenType expectedType) {
@@ -222,6 +222,14 @@ public final class Asm {
                         appendLabelOperand(curToken.lexeme());
                         consume(TokenType.STRING);
                         yield new Label();
+                    }
+                    case SYMBOL -> {
+                        require(curToken.lexeme().length() == 1, "symbol size must be 1");
+                        final int symbol = curToken.lexeme().charAt(0);
+                        appendToCodeBuff(OperandType.NUMBER.code, 1);
+                        appendToCodeBuff(symbol, 4);
+                        consume(TokenType.SYMBOL);
+                        yield new Symbol();
                     }
                     default ->
                             throw new UnsupportedOperationException("must be number or string. %s".formatted(curToken));
