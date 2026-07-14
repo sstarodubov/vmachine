@@ -259,14 +259,29 @@ public final class Asm {
                         break;
                     }
                 }
+            }
+            case "fill" -> {
+                consume(TokenType.STRING);
+                final int repeat = IntegerUtils.parseInt(curToken.lexeme());
+                consume(TokenType.NUMBER);
+                consume(TokenType.COMMA);
+                final int size = IntegerUtils.parseInt(curToken.lexeme());
+                consume(TokenType.NUMBER);
+                consume(TokenType.COMMA);
+                final int value = IntegerUtils.parseInt(curToken.lexeme());
+                consume(TokenType.NUMBER);
 
-                if (vars.contains(name)) {
-                    throw new IllegalStateException("vars duplicate: %s".formatted(name));
+                for (int i = 0; i < repeat; i++) {
+                    appendToCodeBuff(value, size);
                 }
-                vars.add(name);
             }
             default -> throw new UnsupportedOperationException();
         }
+
+        if (vars.contains(name)) {
+            throw new IllegalStateException("vars duplicate: %s".formatted(name));
+        }
+        vars.add(name);
     }
 
     private void appendOpcode(final Opcode opcode, final int operCount) {

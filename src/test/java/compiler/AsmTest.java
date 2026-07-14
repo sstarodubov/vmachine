@@ -883,4 +883,25 @@ class AsmTest {
 
         assertEquals(15, cpu.statusCode);
     }
+
+    @Test
+    void test42() {
+        final var program = """
+               .globl _start
+               .data
+               nums: .fill 3, 4, 5
+
+               .text
+               _start:
+                   movl nums, %edi  # RDI = 5
+                   movl $60, %eax
+                   syscall
+                """;
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+        final int status = cpu.run(code);
+
+        assertEquals(5, cpu.statusCode);
+    }
 }
