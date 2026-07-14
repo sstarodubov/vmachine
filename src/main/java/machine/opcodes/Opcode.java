@@ -38,7 +38,8 @@ public enum Opcode {
     NEGL((byte) 28, "negl"),
     SHLL((byte) 29, "shll"),
     SHRL((byte) 30, "shrl"),
-    SARL((byte) 31, "sarl");
+    SARL((byte) 31, "sarl"),
+    LEAL((byte) 32, "leal");
 
 
     public final byte code;

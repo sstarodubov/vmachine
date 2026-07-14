@@ -60,6 +60,21 @@ public final class CPU {
             curOpcode = Opcode.fromByte(curByte);
             require(curOpcode != null, "unknown opcode: %d".formatted(curByte));
             switch (curOpcode) {
+                case LEAL -> {
+                    final Operand first = readOperand();
+                    final int source = switch (first) {
+                        case MemoryVar(int addr) -> addr;
+                        case MemoryAddr(int addr) -> addr;
+                        default -> throw new UnsupportedOperationException();
+                    };
+                    final Operand second = readOperand();
+                    final int dest = switch (second) {
+                        case Register(int id) -> id;
+                        default -> throw new UnsupportedOperationException();
+                    };
+
+                    regStorage.writeInt(dest, source);
+                }
                 case SARL -> doSh((data, sh) -> data >> sh, sh -> 0x1 << Math.max(sh - 1, 0));
                 case SHRL -> doSh((data, sh) -> data >>> sh, sh -> 1 << Math.max(sh - 1, 0));
                 case SHLL -> doSh((data, sh) -> data << sh, sh -> 0x80_00_00_00 >>> Math.max(sh - 1, 0));

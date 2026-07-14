@@ -216,7 +216,7 @@ public final class Asm {
     }
 
     private Operand createVarOperand() {
-        appendToCodeBuff(OperandType.VARIABLE.code, 1); // указываем что это direct
+        appendToCodeBuff(OperandType.VARIABLE.code, 1); // указываем что это переменная
         addLabelPosToFillLater(curToken.lexeme(), codePos); //сохраняем место куда потом нужно будет проставить физический адресс переменной
         appendToCodeBuff(-1, 4); // это место пока заполянем числом -1
         consume(TokenType.STRING);
@@ -250,6 +250,7 @@ public final class Asm {
 
     private void compileString() {
         switch (Opcode.fromString(curToken.lexeme())) {
+            case LEAL -> appendOpcode(Opcode.LEAL, 2);
             case MOVL -> appendOpcode(Opcode.MOVL, 2);
             case CMOVCL -> appendOpcode(Opcode.CMOVCL, 2);
             case CMOVNCL -> appendOpcode(Opcode.CMOVNCL, 2);

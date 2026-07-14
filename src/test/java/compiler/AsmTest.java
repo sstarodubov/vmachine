@@ -927,4 +927,27 @@ class AsmTest {
 
         assertEquals(5, cpu.statusCode);
     }
+
+    @Test
+    void test44() {
+        final var program = """
+                .globl _start
+    
+                 .data
+                 num: .long 100
+    
+                 .text
+                 _start:
+                     leal num, %ebx     # помещаем в RBX адрес переменной num
+                     movl (%ebx), %edi   # помещаем в RDI значение по адресу из RBX
+                     movl $60, %eax
+                     syscall
+                """;
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+        cpu.run(code);
+
+        assertEquals(100, cpu.statusCode);
+    }
 }
