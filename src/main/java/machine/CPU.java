@@ -344,6 +344,7 @@ public final class CPU {
         final long arg1 = switch (first) {
             case Number(int num) -> num;
             case Register(int id) -> regStorage.readInt(id);
+            case MemoryVar(int addr) -> memory.readTextInt(addr);
             default -> throw new UnsupportedOperationException();
         };
 

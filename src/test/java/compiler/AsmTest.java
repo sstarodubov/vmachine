@@ -974,4 +974,58 @@ class AsmTest {
 
         assertEquals(13, cpu.statusCode);
     }
+
+    @Test
+    void test46() {
+        final var program = """
+            .globl _start
+            .data
+            num1: .long 5
+            num2: .long 6
+            nums: .long 11, 12, 13, 14, 15, 16
+
+            .text
+            _start:
+                movl $nums, %ebx     # помещаем в RBX адрес переменной nums
+                subl $8, %ebx       # вычитаем от адресу в RBX 16 байт
+                movl (%ebx), %edi   # помещаем в RDI значение по адресу из RBX (RDI = 5)
+                movl $60, %eax
+                syscall
+                
+            """;
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+        cpu.run(code);
+
+        assertEquals(5, cpu.statusCode);
+    }
+
+    @Test
+    void test47() {
+        final var program = """
+                .globl _start
+                .data
+                nums: .long 1, 2, 3, 4, 5
+                count: .long 5      # количество элементов в массиве nums
+                .text
+                _start:
+                    movl $nums, %ebx     # помещаем в RBX адрес массива nums
+                    movl count, %ecx    # помещаем в RCX количество элементов в массиве nums
+                    movl $0, %edi       # будущая сумма элементов массива
+                main_loop:
+                    addl (%ebx), %edi   # складываем  значение по адресу из RBX с числом в RDI
+                    addl $4, %ebx       # перемещаемся к следующему элементу массива
+                    subl $1, %ecx       # отнимаем 1 от значения в RCX
+                    jnz main_loop       # если счетчик RCX не равен 0, то переходим обратно к main_loop
+                    movl $60, %eax
+                    syscall
+            """;
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+        cpu.run(code);
+
+        assertEquals(15, cpu.statusCode);
+    }
 }
