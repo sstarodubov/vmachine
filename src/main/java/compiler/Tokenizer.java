@@ -64,6 +64,14 @@ public class Tokenizer {
                 pos++;
                 yield new Token(TokenType.ASTERIX, "*");
             }
+            case '(' -> {
+                pos++;
+                yield new Token(TokenType.OPEN_PARENTHESIS, "(");
+            }
+            case ')' -> {
+                pos++;
+                yield new Token(TokenType.CLOSE_PARENTHESIS, ")");
+            }
             case char num when Character.isDigit(num) -> readNum();
             default -> readString();
         };
@@ -87,7 +95,7 @@ public class Tokenizer {
     private Token readString() {
         final var lexeme = new StringBuilder();
         while (pos < input.length() && !Character.isWhitespace(input.charAt(pos)) && input.charAt(pos) != ':'
-                && input.charAt(pos) != ','
+                && input.charAt(pos) != ',' && input.charAt(pos) != ')' && input.charAt(pos) != '('
         ) {
             lexeme.append(input.charAt(pos++));
         }

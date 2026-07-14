@@ -1,8 +1,13 @@
 package machine;
 
+import java.util.Arrays;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 public enum OperandType {
 
-    NUMBER((byte) 101), REGISTER((byte) 102), ASTERIX((byte) 103), MEMORY_ADDR((byte) 104), VARIABLE((byte) 105);
+    NUMBER((byte) 101), REGISTER((byte) 102), ASTERIX((byte) 103), DIRECT_ADDR((byte) 104), VARIABLE((byte) 105),
+    INDIRECT_ADDR((byte) 106);
 
 
     public final byte code;
@@ -11,15 +16,14 @@ public enum OperandType {
         this.code = i;
     }
 
+    private final static Map<Byte, OperandType> operands = Arrays.stream(OperandType.values())
+            .collect(Collectors.toMap(op -> op.code, op -> op));
 
     public static OperandType fromByte(final byte b) {
-        return switch (b) {
-            case 101 -> NUMBER;
-            case 102 -> REGISTER;
-            case 103 -> ASTERIX;
-            case 104 -> MEMORY_ADDR;
-            case 105 -> VARIABLE;
-            default -> throw new RuntimeException("unknown operand type: %d".formatted(b));
-        };
+        final var result = operands.get(b);
+        if (result == null) {
+            throw new RuntimeException("unknown operand type: %d".formatted(b));
+        }
+        return result;
     }
 }

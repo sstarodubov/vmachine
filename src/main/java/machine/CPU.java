@@ -293,8 +293,17 @@ public final class CPU {
             case NUMBER -> new Number(readTextInt());
             case REGISTER -> new Register(readTextByte());
             case ASTERIX -> new Asterix(readOperand());
-            case MEMORY_ADDR -> new MemoryAddr(readTextInt());
-            case VARIABLE -> new Variable(readTextInt());
+            case DIRECT_ADDR -> new MemoryAddr(readTextInt());
+            case VARIABLE -> new MemoryCell(readTextInt());
+            case INDIRECT_ADDR -> {
+                final int value = readTextInt();
+                final byte baseRegId = readTextByte();
+                final byte idxRegId = readTextByte();
+                final int multiplier = readTextInt();
+                final int addr = value + regStorage.readInt(baseRegId) +
+                        ((idxRegId == -1 ? 0 : regStorage.readInt(idxRegId)) * multiplier);
+                yield new MemoryCell(addr);
+            }
         };
     }
 
@@ -335,7 +344,7 @@ public final class CPU {
         final Operand first = readOperand();
         final Operand second = readOperand();
 
-        require(second instanceof Register || second instanceof Variable, "mov. 2's operand must be register");
+        require(second instanceof Register || second instanceof MemoryCell, "mov. 2's operand must be register");
 
         return new SingleTransfer(first, second);
     }
@@ -346,13 +355,13 @@ public final class CPU {
             case Number(int num) -> num;
             case Register(int id) -> regStorage.readInt(id);
             case MemoryAddr(int addr) -> addr;
-            case Variable(int addr) -> memory.readTextInt(addr);
+            case MemoryCell(int addr) -> memory.readTextInt(addr);
             default -> throw new IllegalStateException("Unexpected value: " + t.from());
         };
         if (moveCondition.get()) {
             switch (t.to()) {
                 case Register(int id) -> regStorage.writeInt(id, data);
-                case Variable(int addr) -> memory.writeInt(addr, data);
+                case MemoryCell(int addr) -> memory.writeInt(addr, data);
                 default -> throw new UnsupportedOperationException();
             }
         }

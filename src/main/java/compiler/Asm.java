@@ -115,20 +115,76 @@ public final class Asm {
         codePos += size;
     }
 
+    /*
+    VALUE(BASEREG, IDXREG, MULTIPLIER)
+
+    Фактичеси адрес состовляется на основе 4 компонентов:
+    VALUE: некоторое фиксированное значение - смещение.
+    BASEREG: базовой регистр, который хранит базовый адрес
+    IDXREG: индексный регистр
+    MULTIPLIER: некоторое число-множитель, на который умножается значение в индексном регистре. Может принимать значения 1, 2, 4 или 8
+
+    На основе этих компонентов адрес вычисляется следующим образом:
+
+    address = VALUE + BASEREG + IDXREG * MULTIPLIE
+     */
+    private Operand createInDirectAddrOperand(final int value) {
+        consume(TokenType.OPEN_PARENTHESIS);
+
+        consume(TokenType.PERCENT);
+        final int baseReg = RegStorage.registerIdFromName(curToken.lexeme());
+        consume(TokenType.STRING);
+        final int idxReg = curToken.type() == TokenType.COMMA ? createIdxReg() : -1;
+        final int multiplier = curToken.type() == TokenType.COMMA ? createMultiplier() : 0;
+
+        appendToCodeBuff(OperandType.INDIRECT_ADDR.code, 1);
+        appendToCodeBuff(value , 4);
+        appendToCodeBuff(baseReg, 1);
+        appendToCodeBuff(idxReg, 1);
+        appendToCodeBuff(multiplier, 4);
+        consume(TokenType.CLOSE_PARENTHESIS);
+        return new IndirectAddr();
+    }
+
+    private int createMultiplier() {
+        consume(TokenType.COMMA);
+        final int multiplier = IntegerUtils.parseInt(curToken.lexeme());
+        consume(TokenType.NUMBER);
+        return multiplier;
+    }
+
+    private int createIdxReg() {
+        consume(TokenType.COMMA);
+        consume(TokenType.PERCENT);
+        final int register = RegStorage.registerIdFromName(curToken.lexeme());
+        consume(TokenType.STRING);
+        require(register != -1, "unknown register: " + curToken.lexeme());
+        return register;
+    }
+
+    private Operand createRegisterOperand() {
+        consume(TokenType.PERCENT);
+        require(curToken.type() == TokenType.STRING, "after percent must be name of register, but: %s".formatted(curToken));
+        final String regName = curToken.lexeme();
+        final int regId = RegStorage.registerIdFromName(regName);
+        require(regId != -1, "register must be supported: %s".formatted(regName));
+        appendToCodeBuff(OperandType.REGISTER.code, 1);
+        appendToCodeBuff(regId, 1);
+        consume(TokenType.STRING);
+        return new Register(regName, regId);
+    }
+
     private Operand compileOperands1() {
         return switch (curToken.type()) {
-            case PERCENT -> {
-                //case %reg
-                consume(TokenType.PERCENT);
-                require(curToken.type() == TokenType.STRING, "after percent must be name of register, but: %s".formatted(curToken));
-                final String regName = curToken.lexeme();
-                final int regId = RegStorage.registerIdFromName(regName);
-                require(regId != -1, "register must be supported: %s".formatted(regName));
-                appendToCodeBuff(OperandType.REGISTER.code, 1);
-                appendToCodeBuff(regId, 1);
-                consume(TokenType.STRING);
-                yield new Register(regName, regId);
+            case OPEN_PARENTHESIS -> createInDirectAddrOperand(0);
+            case NUMBER -> {
+                final int value = IntegerUtils.parseInt(curToken.lexeme());
+                consume(TokenType.NUMBER);
+                yield createInDirectAddrOperand(value);
             }
+
+            //case %reg
+            case PERCENT -> createRegisterOperand();
             case ASTERIX -> {
                 consume(TokenType.ASTERIX);
                 appendToCodeBuff(OperandType.ASTERIX.code, 1);
@@ -147,19 +203,19 @@ public final class Asm {
                         yield new Number(num);
                     }
                     // case $label
-                    case STRING -> handleLabel();
+                    case STRING -> createLabelOperand();
                     default ->
                             throw new UnsupportedOperationException("must be number or string. %s".formatted(curToken));
                 };
             }
-            case STRING -> vars.contains(curToken.lexeme()) ? handleVar()
-                    : handleLabel();
+            case STRING -> vars.contains(curToken.lexeme()) ? createVarOperand()
+                    : createLabelOperand();
 
             default -> throw new IllegalStateException("Unexpected token value " + curToken.type());
         };
     }
 
-    private Operand handleVar() {
+    private Operand createVarOperand() {
         appendToCodeBuff(OperandType.VARIABLE.code, 1); // указываем что это direct
         addLabelPosToFillLater(curToken.lexeme(), codePos); //сохраняем место куда потом нужно будет проставить физический адресс переменной
         appendToCodeBuff(-1, 4); // это место пока заполянем числом -1
@@ -167,8 +223,8 @@ public final class Asm {
         return new Var();
     }
 
-    private Operand handleLabel() {
-        appendToCodeBuff(OperandType.MEMORY_ADDR.code, 1); // указываем что это direct
+    private Operand createLabelOperand() {
+        appendToCodeBuff(OperandType.DIRECT_ADDR.code, 1); // указываем что это direct
         addLabelPosToFillLater(curToken.lexeme(), codePos); //сохраняем место куда потом нужно будет проставить физический адресс метки
         appendToCodeBuff(-1, 4); // это место пока заполянем числом -1
         consume(TokenType.STRING);
