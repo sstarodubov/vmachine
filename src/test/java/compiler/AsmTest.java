@@ -27,7 +27,7 @@ class AsmTest {
                     syscall
                 """;
 
-        final  var asm = new Asm(program);
+        final var asm = new Asm(program);
         final ByteBuffer code = asm.compile();
         final var cpu = new CPU();
 
@@ -87,13 +87,13 @@ class AsmTest {
                 addl(5), REGISTOR.code()(2), Registers.ecx(4), REGISTER.code()(2), Registers.edi(8),
          */
         final var program = """
-               .globl _start
-               
-               .section .text
-               _start:
-                   movl $11, %ecx  # ECX = 11
-                   movl $22, %edi  # EDI = 11
-                   addl %ecx, %edi # EDI = ECX + EDI = 11 + 22 = 33
+                .globl _start
+                
+                .section .text
+                _start:
+                    movl $11, %ecx  # ECX = 11
+                    movl $22, %edi  # EDI = 11
+                    addl %ecx, %edi # EDI = ECX + EDI = 11 + 22 = 33
                 """;
 
         final var asm = new Asm(program);
@@ -108,12 +108,12 @@ class AsmTest {
     @Test
     void test8() {
         final var program = """
-               .globl _start
-               
-               .section .text
-               _start:
-                   movl $11, %ecx
-                   addl $100, %ecx
+                .globl _start
+                
+                .section .text
+                _start:
+                    movl $11, %ecx
+                    addl $100, %ecx
                 """;
 
         final var asm = new Asm(program);
@@ -127,14 +127,14 @@ class AsmTest {
     @Test
     void test9() {
         final var program = """
-        .globl _start
-        .section .text
-        _start:
-            movl $11, %ecx  # RCX = 11
-            movl $55, %edi  # RDI = 55
-            subl %ecx, %edi  # RDI = RDI - RCX= 55 - 11 = 44
-            
-            """;
+                .globl _start
+                .section .text
+                _start:
+                    movl $11, %ecx  # RCX = 11
+                    movl $55, %edi  # RDI = 55
+                    subl %ecx, %edi  # RDI = RDI - RCX= 55 - 11 = 44
+                
+                """;
 
         final var asm = new Asm(program);
         final ByteBuffer code = asm.compile();
@@ -147,12 +147,12 @@ class AsmTest {
     @Test
     void test10() {
         final var program = """
-                .globl _start
-                .section .text
-                _start:
-                    movl $4, %edi
-                    incl %edi   # RDI = RDI + 1= 4 + 1 = 5
-            """;
+                    .globl _start
+                    .section .text
+                    _start:
+                        movl $4, %edi
+                        incl %edi   # RDI = RDI + 1= 4 + 1 = 5
+                """;
 
         final var asm = new Asm(program);
         final ByteBuffer code = asm.compile();
@@ -165,12 +165,12 @@ class AsmTest {
     @Test
     void test11() {
         final var program = """
-                .globl _start
-                .section .text
-                _start:
-                    movl $4, %edi
-                    decl %edi   # RDI = RDI + 1= 4 + 1 = 5
-            """;
+                    .globl _start
+                    .section .text
+                    _start:
+                        movl $4, %edi
+                        decl %edi   # RDI = RDI + 1= 4 + 1 = 5
+                """;
 
         final var asm = new Asm(program);
         final ByteBuffer code = asm.compile();
@@ -184,13 +184,13 @@ class AsmTest {
     @Test
     void test12() {
         final var program = """
-              .globl _start
-              .section .text
-              _start:
-                  movl $2, %edi
-                  movl $4, %eax
-                  mull %edi           # EAX = EAX * EDI
-            """;
+                  .globl _start
+                  .section .text
+                  _start:
+                      movl $2, %edi
+                      movl $4, %eax
+                      mull %edi           # EAX = EAX * EDI
+                """;
 
         final var asm = new Asm(program);
         final ByteBuffer code = asm.compile();
@@ -204,13 +204,13 @@ class AsmTest {
     void test14() {
         //EDX:EAX = EAX × operand32
         final var program = """
-              .globl _start
-              .section .text
-              _start:
-                  movl $2147483647, %edi
-                  movl $4, %eax
-                  mull %edi           # EAX = EAX * EDI
-            """;
+                  .globl _start
+                  .section .text
+                  _start:
+                      movl $2147483647, %edi
+                      movl $4, %eax
+                      mull %edi           # EAX = EAX * EDI
+                """;
 
         final var asm = new Asm(program);
         final ByteBuffer code = asm.compile();
@@ -228,13 +228,13 @@ class AsmTest {
     void test15() {
         //EDX:EAX = EAX × operand32
         final var program = """
-              .globl _start
-              .section .text
-              _start:
-                  movl $0x7fffffff, %edi
-                  movl $4, %eax
-                  mull %edi           # EAX = EAX * EDI
-            """;
+                  .globl _start
+                  .section .text
+                  _start:
+                      movl $0x7fffffff, %edi
+                      movl $4, %eax
+                      mull %edi           # EAX = EAX * EDI
+                """;
 
         final var asm = new Asm(program);
         final ByteBuffer code = asm.compile();
@@ -251,17 +251,17 @@ class AsmTest {
     @Test
     void test16() {
         final var program = """
-               .globl _start
-               .section .text
-               
-               _start:
-                   movl $11, %edi      
-                   jmp exit           
-                   movl $22, %edi    
-               exit:                
-                   movl $60, %eax
-                   syscall
-            """;
+                   .globl _start
+                   .section .text
+                
+                   _start:
+                       movl $11, %edi      
+                       jmp exit           
+                       movl $22, %edi    
+                   exit:                
+                       movl $60, %eax
+                       syscall
+                """;
 
         final var asm = new Asm(program);
         final ByteBuffer code = asm.compile();
@@ -274,17 +274,17 @@ class AsmTest {
     @Test
     void test17() {
         final var program = """
-              .globl _start
-              .section .text
-              _start:
-                  movl $exit, %ebx
-                  movl $11, %edi
-                  jmp *%ebx
-                  movl $6, %edi
-              exit:
-                  movl $60, %eax
-                  syscall
-            """;
+                  .globl _start
+                  .section .text
+                  _start:
+                      movl $exit, %ebx
+                      movl $11, %edi
+                      jmp *%ebx
+                      movl $6, %edi
+                  exit:
+                      movl $60, %eax
+                      syscall
+                """;
 
         final var asm = new Asm(program);
         final ByteBuffer code = asm.compile();
@@ -297,21 +297,21 @@ class AsmTest {
     @Test
     void test18() {
         final var program = """
-             .globl _start
-             .section .text
-             _start:
-                 movl $0x7fffffff, %ecx
-                 movl $1, %edx
-                 addl %ecx, %edx     # RDX = RDX + RCX
-                 jc carry_set       # если флаг переноса установлен, переход к метке carry_set
-                 movl $0, %edi       # если флаг переноса не установлен, RDI = 0
-                 jmp exit
-             carry_set:              # если флаг переноса установлен
-                 movl $1, %edi       # RDI = 1
-             exit:                   # метка exit
-                 movl $60, %eax
-                 syscall
-            """;
+                 .globl _start
+                 .section .text
+                 _start:
+                     movl $0x7fffffff, %ecx
+                     movl $1, %edx
+                     addl %ecx, %edx     # RDX = RDX + RCX
+                     jc carry_set       # если флаг переноса установлен, переход к метке carry_set
+                     movl $0, %edi       # если флаг переноса не установлен, RDI = 0
+                     jmp exit
+                 carry_set:              # если флаг переноса установлен
+                     movl $1, %edi       # RDI = 1
+                 exit:                   # метка exit
+                     movl $60, %eax
+                     syscall
+                """;
         final var asm = new Asm(program);
         final ByteBuffer code = asm.compile();
         final var cpu = new CPU();
@@ -323,21 +323,21 @@ class AsmTest {
     @Test
     void test19() {
         final var program = """
-             .globl _start
-             .section .text
-             _start:
-                 movl $100, %ecx
-                 movl $1, %edx
-                 addl %ecx, %edx
-                 jc carry_set     
-                 movl $100, %edi   
-                 jmp exit
-             carry_set:         
-                 movl $1, %edi 
-             exit:            
-                 movl $60, %eax
-                 syscall
-            """;
+                 .globl _start
+                 .section .text
+                 _start:
+                     movl $100, %ecx
+                     movl $1, %edx
+                     addl %ecx, %edx
+                     jc carry_set     
+                     movl $100, %edi   
+                     jmp exit
+                 carry_set:         
+                     movl $1, %edi 
+                 exit:            
+                     movl $60, %eax
+                     syscall
+                """;
         final var asm = new Asm(program);
         final ByteBuffer code = asm.compile();
         final var cpu = new CPU();
@@ -350,21 +350,21 @@ class AsmTest {
     @Test
     void test20() {
         final var program = """
-                .globl _start
-                .section .text
-                _start:
-                    movl $5, %ecx
-                    movl $5, %edx
-                    subl %ecx, %edx     # RDX = RDX - RCX
-                    jz zero_set         # если флаг нуля установлен, переход к метке zero_set
-                    movl $2, %edi       # если флаг нуля не установлен, RDI = 2
-                    jmp exit
-                zero_set:              # если флаг нуля установлен
-                    movl $4, %edi       # RDI = 4
-                exit:
-                    movl $60, %eax
-                    syscall
-            """;
+                    .globl _start
+                    .section .text
+                    _start:
+                        movl $5, %ecx
+                        movl $5, %edx
+                        subl %ecx, %edx     # RDX = RDX - RCX
+                        jz zero_set         # если флаг нуля установлен, переход к метке zero_set
+                        movl $2, %edi       # если флаг нуля не установлен, RDI = 2
+                        jmp exit
+                    zero_set:              # если флаг нуля установлен
+                        movl $4, %edi       # RDI = 4
+                    exit:
+                        movl $60, %eax
+                        syscall
+                """;
         final var asm = new Asm(program);
         final ByteBuffer code = asm.compile();
         final var cpu = new CPU();
@@ -377,21 +377,21 @@ class AsmTest {
     @Test
     void test21() {
         final var program = """
-                .globl _start
-                .section .text
-                _start:
-                    movl $5, %ecx
-                    movl $4, %edx
-                    subl %ecx, %edx   
-                    jz zero_set      
-                    movl $2, %edi   
-                    jmp exit
-                zero_set:          
-                    movl $4, %edi  
-                exit:
-                    movl $60, %eax
-                    syscall
-            """;
+                    .globl _start
+                    .section .text
+                    _start:
+                        movl $5, %ecx
+                        movl $4, %edx
+                        subl %ecx, %edx   
+                        jz zero_set      
+                        movl $2, %edi   
+                        jmp exit
+                    zero_set:          
+                        movl $4, %edi  
+                    exit:
+                        movl $60, %eax
+                        syscall
+                """;
         final var asm = new Asm(program);
         final ByteBuffer code = asm.compile();
         final var cpu = new CPU();
@@ -401,23 +401,22 @@ class AsmTest {
     }
 
 
-
     @Test
     void test22() {
         final var program = """
-              .globl _start
-               .section .text
-               _start:
-                   movl $5, %ecx
-                   movl $0, %edi
-               loop:
-                   addl $2, %edi     
-                   subl $1, %ecx    
-                   jnz loop        
-
-                   movl $60, %eax
-                   syscall
-            """;
+                  .globl _start
+                   .section .text
+                   _start:
+                       movl $5, %ecx
+                       movl $0, %edi
+                   loop:
+                       addl $2, %edi     
+                       subl $1, %ecx    
+                       jnz loop        
+                
+                       movl $60, %eax
+                       syscall
+                """;
         final var asm = new Asm(program);
         final ByteBuffer code = asm.compile();
         final var cpu = new CPU();
@@ -430,21 +429,21 @@ class AsmTest {
     @Test
     void test23() {
         final var program = """
-              .globl _start
-              .section .text
-              _start:
-                  movl $1, %ebx
-                  movl $0, %eax
-                  cmpl %ebx, %eax     # сравниваем RAX и RBX. Фактически вычитаем RAX - RBX
-                  jc carry_set        # если произошел перенос
-                  movl $2, %edi       # если нет переноса
-                  jmp exit
-              carry_set:
-                  movl $4, %edi       # если есть перенос
-              exit:
-                  movl $60, %eax
-                  syscall
-            """;
+                  .globl _start
+                  .section .text
+                  _start:
+                      movl $1, %ebx
+                      movl $0, %eax
+                      cmpl %ebx, %eax     # сравниваем RAX и RBX. Фактически вычитаем RAX - RBX
+                      jc carry_set        # если произошел перенос
+                      movl $2, %edi       # если нет переноса
+                      jmp exit
+                  carry_set:
+                      movl $4, %edi       # если есть перенос
+                  exit:
+                      movl $60, %eax
+                      syscall
+                """;
         final var asm = new Asm(program);
         final ByteBuffer code = asm.compile();
         final var cpu = new CPU();
@@ -456,21 +455,21 @@ class AsmTest {
     @Test
     void test24() {
         final var program = """
-            .globl _start
-            .text
-            _start:
-                movl $33, %ecx
-                movl $22, %edx
-                cmpl %ecx, %edx
-                je equal       
-                movl $2, %edi 
-                jmp exit
-            equal:
-                movl $4, %edi  
-            exit:
-                movl $60, %eax
-                syscall
-            """;
+                .globl _start
+                .text
+                _start:
+                    movl $33, %ecx
+                    movl $22, %edx
+                    cmpl %ecx, %edx
+                    je equal       
+                    movl $2, %edi 
+                    jmp exit
+                equal:
+                    movl $4, %edi  
+                exit:
+                    movl $60, %eax
+                    syscall
+                """;
         final var asm = new Asm(program);
         final ByteBuffer code = asm.compile();
         final var cpu = new CPU();
@@ -483,22 +482,22 @@ class AsmTest {
     @Test
     void test25() {
         final var program = """
-                .globl _start
-                .text
-                _start:
-                    movl $0x7fffffff, %ecx
-                    movl $1, %edx
-                    addl %ecx, %edx         # складываем RCX и RDX, устанавливается флаг переноса CF
+                 .globl _start
+                 .text
+                 _start:
+                     movl $0x7fffffff, %ecx
+                     movl $1, %edx
+                     addl %ecx, %edx         # складываем RCX и RDX, устанавливается флаг переноса CF
                 
-                    movl $2, %ecx           # вариант, если флаг переноса сброшен (CF = 0)
-                    movl $4, %edx           # вариант, если флаг переноса установлен (CF = 1)
+                     movl $2, %ecx           # вариант, если флаг переноса сброшен (CF = 0)
+                     movl $4, %edx           # вариант, если флаг переноса установлен (CF = 1)
                 
-                    cmovncl %ecx, %edi        # Если CF = 0
-                    cmovcl %edx, %edi         # Если CF = 1
+                     cmovncl %ecx, %edi        # Если CF = 0
+                     cmovcl %edx, %edi         # Если CF = 1
                 
-                    movl $60, %eax
-                    syscall
-               """;
+                     movl $60, %eax
+                     syscall
+                """;
         final var asm = new Asm(program);
         final ByteBuffer code = asm.compile();
         final var cpu = new CPU();
@@ -510,22 +509,22 @@ class AsmTest {
     @Test
     void test26() {
         final var program = """
-                .globl _start
-                .text
-                _start:
-                    movl $0, %ecx
-                    movl $1, %edx
-                    addl %ecx, %edx         # складываем RCX и RDX, устанавливается флаг переноса CF
+                 .globl _start
+                 .text
+                 _start:
+                     movl $0, %ecx
+                     movl $1, %edx
+                     addl %ecx, %edx         # складываем RCX и RDX, устанавливается флаг переноса CF
                 
-                    movl $2, %ecx           # вариант, если флаг переноса сброшен (CF = 0)
-                    movl $4, %edx           # вариант, если флаг переноса установлен (CF = 1)
+                     movl $2, %ecx           # вариант, если флаг переноса сброшен (CF = 0)
+                     movl $4, %edx           # вариант, если флаг переноса установлен (CF = 1)
                 
-                    cmovncl %ecx, %edi        # Если CF = 0
-                    cmovcl %edx, %edi         # Если CF = 1
+                     cmovncl %ecx, %edi        # Если CF = 0
+                     cmovcl %edx, %edi         # Если CF = 1
                 
-                    movl $60, %eax
-                    syscall
-               """;
+                     movl $60, %eax
+                     syscall
+                """;
         final var asm = new Asm(program);
         final ByteBuffer code = asm.compile();
         final var cpu = new CPU();
@@ -537,22 +536,22 @@ class AsmTest {
     @Test
     void test27() {
         final var program = """
-                .globl _start
-                .text
-                _start:
-                    movl $2, %ecx
-                    movl $2, %edx
-                    cmpl %ecx, %edx         # сравниваем RCX и RDX, устанавливается флаг нуля ZF
-    
-                    movl $8, %ecx           # вариант, если флаг нуля сброшен (ZF = 0)
-                    movl $16, %edx           # вариант, если флаг нуля установлен (ZF = 1)
-    
-                    cmovnel %ecx, %edi        # Если ZF = 0
-                    cmovel %edx, %edi         # Если ZF = 1
-    
-                    movl $60, %eax
-                    syscall
-               """;
+                 .globl _start
+                 .text
+                 _start:
+                     movl $2, %ecx
+                     movl $2, %edx
+                     cmpl %ecx, %edx         # сравниваем RCX и RDX, устанавливается флаг нуля ZF
+                
+                     movl $8, %ecx           # вариант, если флаг нуля сброшен (ZF = 0)
+                     movl $16, %edx           # вариант, если флаг нуля установлен (ZF = 1)
+                
+                     cmovnel %ecx, %edi        # Если ZF = 0
+                     cmovel %edx, %edi         # Если ZF = 1
+                
+                     movl $60, %eax
+                     syscall
+                """;
         final var asm = new Asm(program);
         final ByteBuffer code = asm.compile();
         final var cpu = new CPU();
@@ -562,26 +561,25 @@ class AsmTest {
     }
 
 
-
     @Test
     void test28() {
         final var program = """
-                .globl _start
-                .text
-                _start:
-                    movl $3, %ecx
-                    movl $2, %edx
-                    cmpl %ecx, %edx         # сравниваем RCX и RDX, устанавливается флаг нуля ZF
-    
-                    movl $8, %ecx           # вариант, если флаг нуля сброшен (ZF = 0)
-                    movl $16, %edx           # вариант, если флаг нуля установлен (ZF = 1)
-    
-                    cmovnel %ecx, %edi        # Если ZF = 0
-                    cmovel %edx, %edi         # Если ZF = 1
-    
-                    movl $60, %eax
-                    syscall
-               """;
+                 .globl _start
+                 .text
+                 _start:
+                     movl $3, %ecx
+                     movl $2, %edx
+                     cmpl %ecx, %edx         # сравниваем RCX и RDX, устанавливается флаг нуля ZF
+                
+                     movl $8, %ecx           # вариант, если флаг нуля сброшен (ZF = 0)
+                     movl $16, %edx           # вариант, если флаг нуля установлен (ZF = 1)
+                
+                     cmovnel %ecx, %edi        # Если ZF = 0
+                     cmovel %edx, %edi         # Если ZF = 1
+                
+                     movl $60, %eax
+                     syscall
+                """;
         final var asm = new Asm(program);
         final ByteBuffer code = asm.compile();
         final var cpu = new CPU();
@@ -594,18 +592,18 @@ class AsmTest {
     @Test
     void test29() {
         final var program = """
-                .globl _start
-                .text
-                _start:
-                    movl $5, %ecx   # регистр-счетчик
-                    movl $0, %edi
-                mainloop:           # цикл
-                    addl $2, %edi   # некоторые действия цикла
-                    loopl mainloop  # уменьшаем значение в %rcx на 1, переходим к метке mainloop, если %rcx не содержит 0
-    
-                    movl $60, %eax
-                    syscall
-               """;
+                 .globl _start
+                 .text
+                 _start:
+                     movl $5, %ecx   # регистр-счетчик
+                     movl $0, %edi
+                 mainloop:           # цикл
+                     addl $2, %edi   # некоторые действия цикла
+                     loopl mainloop  # уменьшаем значение в %rcx на 1, переходим к метке mainloop, если %rcx не содержит 0
+                
+                     movl $60, %eax
+                     syscall
+                """;
         final var asm = new Asm(program);
         final ByteBuffer code = asm.compile();
         final var cpu = new CPU();
@@ -618,17 +616,17 @@ class AsmTest {
     @Test
     void test30() {
         final var program = """
-                .globl _start
+                 .globl _start
                 
-               .text
-               _start:
-
-                   movl $12, %edi       # помещаем в регистр RDI число 12 - 1100
-                   andl $6, %edi        # rdi = rdi AND 6 = 1100 AND 0110 = 0100 = 4
-
-                   movl $60, %eax
-                   syscall
-               """;
+                .text
+                _start:
+                
+                    movl $12, %edi       # помещаем в регистр RDI число 12 - 1100
+                    andl $6, %edi        # rdi = rdi AND 6 = 1100 AND 0110 = 0100 = 4
+                
+                    movl $60, %eax
+                    syscall
+                """;
         final var asm = new Asm(program);
         final ByteBuffer code = asm.compile();
         final var cpu = new CPU();
@@ -641,16 +639,16 @@ class AsmTest {
     @Test
     void test31() {
         final var program = """
-                .globl _start
-    
-                .text
-                _start:
-                    movl $12, %edi      # помещаем в регистр rdi  число 12 - 1100
-                    orl $6, %edi        # rdi = rdi OR 6 = 1100 OR 0110 = 1110 = 14
-    
-                    movl $60, %eax
-                    syscall
-               """;
+                 .globl _start
+                
+                 .text
+                 _start:
+                     movl $12, %edi      # помещаем в регистр rdi  число 12 - 1100
+                     orl $6, %edi        # rdi = rdi OR 6 = 1100 OR 0110 = 1110 = 14
+                
+                     movl $60, %eax
+                     syscall
+                """;
         final var asm = new Asm(program);
         final ByteBuffer code = asm.compile();
         final var cpu = new CPU();
@@ -663,17 +661,17 @@ class AsmTest {
     @Test
     void test32() {
         final var program = """
-                .globl _start
-    
-                 .text
-                 _start:
-    
-                     movl $12, %edi      # помещаем в регистр rdi  число 12 - 1100
-                     xorl $6, %edi       # rdi = rdi XOR 6 = 1100 XOR 0110 = 1010 = 10
-    
-                     movl $60, %eax
-                     syscall
-               """;
+                 .globl _start
+                
+                  .text
+                  _start:
+                
+                      movl $12, %edi      # помещаем в регистр rdi  число 12 - 1100
+                      xorl $6, %edi       # rdi = rdi XOR 6 = 1100 XOR 0110 = 1010 = 10
+                
+                      movl $60, %eax
+                      syscall
+                """;
         final var asm = new Asm(program);
         final ByteBuffer code = asm.compile();
         final var cpu = new CPU();
@@ -686,18 +684,18 @@ class AsmTest {
     @Test
     void test33() {
         final var program = """
-                .globl _start
-    
-                  .text
-                  _start:
-    
-                      xorl %edi, %edi    # rdi = 0
-                      movl $12, %edi     # помещаем в регистр rdi число 12 - 00000000 00000000 00000000 00001100
-                      notl %edi          # rdi =NOT(rdi)=NOT(12)= 11111111 11111111 11111111 11110011
-    
-                      movl $60, %eax
-                      syscall
-               """;
+                 .globl _start
+                
+                   .text
+                   _start:
+                
+                       xorl %edi, %edi    # rdi = 0
+                       movl $12, %edi     # помещаем в регистр rdi число 12 - 00000000 00000000 00000000 00001100
+                       notl %edi          # rdi =NOT(rdi)=NOT(12)= 11111111 11111111 11111111 11110011
+                
+                       movl $60, %eax
+                       syscall
+                """;
         final var asm = new Asm(program);
         final ByteBuffer code = asm.compile();
         final var cpu = new CPU();
@@ -710,17 +708,17 @@ class AsmTest {
     @Test
     void test34() {
         final var program = """
-              .globl _start
-
-              .text
-              _start:
-
-                  movl $-12, %edi
-                  negl %edi        # rdi = -1 * rdi = -1 * -12 = 12
-
-                  movl $60, %eax
-                  syscall
-               """;
+                .globl _start
+                
+                .text
+                _start:
+                
+                    movl $-12, %edi
+                    negl %edi        # rdi = -1 * rdi = -1 * -12 = 12
+                
+                    movl $60, %eax
+                    syscall
+                """;
         final var asm = new Asm(program);
         final ByteBuffer code = asm.compile();
         final var cpu = new CPU();
@@ -733,16 +731,16 @@ class AsmTest {
     @Test
     void test35() {
         final var program = """
-                .globl _start
-    
-               .text
-               _start:
-                   movl $5, %edi       # в RDI число 5 или 00000101
-                   shll $1, %edi       # сдвигаем число в RDI на 1 разряд влево = 00000101 << 1 = 00001010 = 10
-    
-                   movl $60, %eax
-                   syscall
-               """;
+                 .globl _start
+                
+                .text
+                _start:
+                    movl $5, %edi       # в RDI число 5 или 00000101
+                    shll $1, %edi       # сдвигаем число в RDI на 1 разряд влево = 00000101 << 1 = 00001010 = 10
+                
+                    movl $60, %eax
+                    syscall
+                """;
         final var asm = new Asm(program);
         final ByteBuffer code = asm.compile();
         final var cpu = new CPU();
@@ -755,7 +753,7 @@ class AsmTest {
     void test36() {
         final var program = """
                 .globl _start
-
+                
                   .text
                   _start:
                       movl $0x7fffffff , %eax   
@@ -780,15 +778,15 @@ class AsmTest {
     @Test
     void test37() {
         final var program = """
-                .globl _start
-               .text
-               _start:
-
-                   movl $69, %edi     # в RDI число 69 или 01000101
-                   shrl $2, %edi      # сдвигаем число в RDI на 2 разряда вправо = 01000101 >> 2 = 00010001 = 17
-
-                   movl $60, %eax
-                   syscall
+                 .globl _start
+                .text
+                _start:
+                
+                    movl $69, %edi     # в RDI число 69 или 01000101
+                    shrl $2, %edi      # сдвигаем число в RDI на 2 разряда вправо = 01000101 >> 2 = 00010001 = 17
+                
+                    movl $60, %eax
+                    syscall
                 """;
         final var asm = new Asm(program);
         final ByteBuffer code = asm.compile();
@@ -802,12 +800,12 @@ class AsmTest {
     void test38() {
         final var program = """
                 .globl _start
-    
+                
                 .text
                 _start:
                     movl $-32, %edi
                     sarl $4, %edi  
-    
+                
                     movl $60, %eax
                     syscall
                 """;
@@ -823,10 +821,10 @@ class AsmTest {
     void test39() {
         final var program = """
                 .globl _start
-
+                
                 .section .text
                 number: .long 123   # определяем объект number внутри секции .text
-
+                
                 _start:
                     movl number, %edx   # RDX = number
                     movl %edx, %edi     # RDI = RDX = number
@@ -836,7 +834,7 @@ class AsmTest {
         final var asm = new Asm(program);
         final ByteBuffer code = asm.compile();
         final var cpu = new CPU();
-        final int status = cpu.run(code);
+        cpu.run(code);
 
         assertEquals(123, cpu.statusCode);
     }
@@ -845,10 +843,10 @@ class AsmTest {
     void test40() {
         final var program = """
                 .globl _start
-    
+                
                  .data
                  number: .long 123       # переменная number в секции .data
-    
+                
                  .text
                  _start:
                      movl $67, %eax      # помещаем в AL число 67
@@ -863,5 +861,26 @@ class AsmTest {
         final int status = cpu.run(code);
 
         assertEquals(67, cpu.statusCode);
+    }
+
+    @Test
+    void test41() {
+        final var program = """
+                .globl _start
+                .data
+                 nums: .long 15, 16, 17, 18
+                
+                .text
+                _start:
+                    movl nums, %edi  # AL = 15
+                    movl $60, %eax
+                    syscall
+                """;
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+        final int status = cpu.run(code);
+
+        assertEquals(15, cpu.statusCode);
     }
 }

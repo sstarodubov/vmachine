@@ -213,22 +213,7 @@ public final class Asm {
                 labelsToAddress.put(name, codePos);
 
                 if (curToken.type() == TokenType.DOT) {
-                    // declare var
-                    consume(TokenType.DOT);
-                    switch (curToken.lexeme()) {
-                        // number
-                        case "long" -> {
-                            consume(TokenType.STRING);
-                            final int num = IntegerUtils.parseInt(curToken.lexeme());
-                            consume(TokenType.NUMBER);
-                            appendToCodeBuff(num, 4);
-                            if (vars.contains(name)) {
-                                throw new IllegalStateException("vars duplicate: %s".formatted(name));
-                            }
-                            vars.add(name);
-                        }
-                        default -> throw new UnsupportedOperationException();
-                    }
+                     declareVariable(name);
                 }
             }
             case INQL -> appendOpcode(Opcode.INQL, 1);
@@ -254,6 +239,33 @@ public final class Asm {
             case SHLL -> appendOpcode(Opcode.SHLL, 2);
             case SHRL -> appendOpcode(Opcode.SHRL, 2);
             case SARL -> appendOpcode(Opcode.SARL, 2);
+        }
+    }
+
+    private void declareVariable(final String name) {
+        consume(TokenType.DOT);
+        switch (curToken.lexeme()) {
+            // number
+            case "long" -> {
+                consume(TokenType.STRING);
+
+                while (curToken.type() != TokenType.EOL) {
+                    final int num = IntegerUtils.parseInt(curToken.lexeme());
+                    consume(TokenType.NUMBER);
+                    appendToCodeBuff(num, 4);
+                    if (curToken.type() == TokenType.COMMA) {
+                        consume(TokenType.COMMA);
+                    } else {
+                        break;
+                    }
+                }
+
+                if (vars.contains(name)) {
+                    throw new IllegalStateException("vars duplicate: %s".formatted(name));
+                }
+                vars.add(name);
+            }
+            default -> throw new UnsupportedOperationException();
         }
     }
 
