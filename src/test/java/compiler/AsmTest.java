@@ -1099,4 +1099,51 @@ class AsmTest {
 
         assertEquals(13, cpu.statusCode);
     }
+
+    @Test
+    void test51() {
+        final var program = """
+              .globl _start
+              .data
+              nums: .long 1, 2, 3, 4, 5, 6
+              count: .long .- nums
+              
+
+              .text
+              _start:
+                  movl count, %edi    # помещаем в RDI размер массива nums
+                  movl $60, %eax
+                  syscall
+           """;
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+        cpu.run(code);
+
+        assertEquals(24, cpu.statusCode);
+    }
+
+    @Test
+    void test52() {
+        final var program = """
+           .globl _start
+           .data
+           num1: .long 45
+           nums: .long 11, 12, 13, 14, 15, 16
+
+           .text
+           _start:
+               movl $nums, %ebx     # помещаем в RBX адрес массива nums
+               movl -4(%ebx), %edi   # RDI =  значение по адресу (RBX-4)
+
+               movl $60, %eax
+               syscall
+           """;
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+        cpu.run(code);
+
+        assertEquals(45, cpu.statusCode);
+    }
 }

@@ -332,6 +332,34 @@ public final class Asm {
         }
     }
 
+    private int parseVariableExp(final String varName) {
+        consume(TokenType.DOT);
+        final int varPos = labelsToAddress.getOrDefault(varName, -1);
+        require(varPos != -1, "var '%s' must be declared".formatted(varName));
+
+        return switch (curToken.lexeme()) {
+           case "-" -> {
+                consume(TokenType.STRING);
+                final int result = varPos - labelsToAddress.get(curToken.lexeme());
+                consume(TokenType.STRING);
+                yield result;
+           }
+           case "+" -> {
+               consume(TokenType.STRING);
+               final int result = varPos + labelsToAddress.get(curToken.lexeme());
+               consume(TokenType.STRING);
+               yield result;
+           }
+           default -> varPos;
+        };
+    }
+
+    int parseInteger() {
+        final int result = IntegerUtils.parseInt(curToken.lexeme());
+        consume(TokenType.NUMBER);
+        return result;
+    }
+
     private void declareVariable(final String name) {
         consume(TokenType.DOT);
         switch (curToken.lexeme()) {
@@ -340,8 +368,8 @@ public final class Asm {
                 consume(TokenType.STRING);
 
                 while (curToken.type() != TokenType.EOL) {
-                    final int num = IntegerUtils.parseInt(curToken.lexeme());
-                    consume(TokenType.NUMBER);
+                    final int num = curToken.type() == TokenType.DOT ? parseVariableExp(name):
+                            parseInteger();
                     appendToCodeBuff(num, 4);
                     if (curToken.type() == TokenType.COMMA) {
                         consume(TokenType.COMMA);
