@@ -1245,4 +1245,32 @@ class AsmTest {
 
         assertEquals(6, cpu.statusCode);
     }
+
+
+    @Test
+    void test57() {
+        final var program = """
+               .globl _start
+               .equ first, 0
+               .equ second, 4
+               .equ third, 8
+
+               .data
+               nums: .long 5, 6, 7
+
+               .text
+               _start:
+                   movl $nums, %ebx        # в RBX адрес переменной nums
+                   movl third(%ebx), %edi  # в RDI значение по адресу (RBX + third)
+
+                   movl $60, %eax
+                   syscall
+           """;
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+        cpu.run(code);
+
+        assertEquals(7, cpu.statusCode);
+    }
 }

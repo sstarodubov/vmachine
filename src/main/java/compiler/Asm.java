@@ -252,7 +252,8 @@ public final class Asm {
                 consume(TokenType.STRING);
                 //case indirect addr
                 if (curToken.type() == TokenType.OPEN_PARENTHESIS) {
-                    final int varPos = labelsToAddress.getOrDefault(str, -1);
+                    final int varPos = constants.containsKey(str) ? constants.get(str)
+                            : labelsToAddress.getOrDefault(str, -1);
                     require(varPos != -1, "variable '%s' must exists");
                     createInDirectAddrOperand(varPos);
                     yield new IndirectAddr();
