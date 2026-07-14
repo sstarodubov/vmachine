@@ -1273,4 +1273,47 @@ class AsmTest {
 
         assertEquals(7, cpu.statusCode);
     }
+
+
+    @Test
+    void test58() {
+        final var origin = System.out;
+        try(var out = new ByteArrayOutputStream()) {
+            System.setOut(new PrintStream(out));
+            final var program = """
+           .globl _start
+           
+        
+           .data
+           # условная структура
+           person: .ascii "Alice"  # имя
+                   .long 34        # возраст
+                   
+           # смещение компонентов в структуре
+           .equ NAME_OFFSET, 0
+           .equ AGE_OFFSET, 5
+           
+           .text
+           _start:
+               movl $person, %esi   # в RSI - адрес строки
+               movl $1, %edi        # в RDI - дексриптор вывода в стандартный поток (консоль)
+               movl $AGE_OFFSET, %edx    # в RDX - длина строки
+               movl $1, %eax        # в RAX - номер функции для вывода в поток\s
+               syscall              # вызываем функцию Linux
+               movl AGE_OFFSET(%esi), %edi  # в RDI - возраст
+               movl $60, %eax
+               syscall
+           """;
+            final var asm = new Asm(program);
+            final ByteBuffer code = asm.compile();
+            final var cpu = new CPU();
+            cpu.run(code);
+            assertEquals(34, cpu.statusCode);
+            assertEquals("Alice\n", out.toString());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        System.setOut(origin);
+    }
 }

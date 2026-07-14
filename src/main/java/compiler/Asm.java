@@ -52,8 +52,7 @@ public final class Asm {
         curToken = tokenizer.nextToken();
         while (curToken.type() != TokenType.EOF) {
             switch (curToken.type()) {
-                case HASHTAG -> compileComment();
-                case DOT -> compileDot();
+                case HASHTAG -> skipComment();
                 case EOL -> consume(TokenType.EOL);
                 case STRING -> compileString();
                 default -> throw new IllegalStateException("unexpected token type: %s".formatted(curToken.type()));
@@ -303,6 +302,13 @@ public final class Asm {
 
 
     private void compileString() {
+        // special words
+        if (curToken.lexeme().startsWith(".")) {
+            compileSpecial();
+            return;
+        }
+
+        //opcodes
         switch (Opcode.fromString(curToken.lexeme())) {
             case LEAL -> appendOpcode(Opcode.LEAL, 2);
             case MOVL -> appendOpcode(Opcode.MOVL, 2);
@@ -318,12 +324,13 @@ public final class Asm {
             case ADDL -> appendOpcode(Opcode.ADDL, 2);
             case SUBL -> appendOpcode(Opcode.SUBL, 2);
             case null -> {
+                // variables, labels
                 final var name = curToken.lexeme();
                 consume(TokenType.STRING);
                 consume(TokenType.COLON);
                 labelsToAddress.put(name, codePos);
 
-                if (curToken.type() == TokenType.DOT) {
+                if (curToken.type() == TokenType.STRING && curToken.lexeme().startsWith(".")) {
                      declareVariable(name);
                 }
             }
@@ -354,18 +361,17 @@ public final class Asm {
     }
 
     private int parseCurrentAddrExp(final String varName) {
-        consume(TokenType.DOT);
         final int varPos = labelsToAddress.getOrDefault(varName, -1);
         require(varPos != -1, "var '%s' must be declared".formatted(varName));
 
         return switch (curToken.lexeme()) {
-           case "-" -> {
+           case ".-" -> {
                 consume(TokenType.STRING);
                 final int result = varPos - labelsToAddress.get(curToken.lexeme());
                 consume(TokenType.STRING);
                 yield result;
            }
-           case "+" -> {
+           case ".+" -> {
                consume(TokenType.STRING);
                final int result = varPos + labelsToAddress.get(curToken.lexeme());
                consume(TokenType.STRING);
@@ -376,74 +382,89 @@ public final class Asm {
     }
 
     private void declareVariable(final String name) {
-        consume(TokenType.DOT);
-        switch (curToken.lexeme()) {
-            // string literal
-            case "asciz" -> {
-                consume(TokenType.STRING);
-                require(curToken.type() == TokenType.STR_LITERAL, "asciz must be string literal");
-                final String s = curToken.lexeme();
-                byte b;
-                for (int i = 0; i < s.length(); i++) {
-                    b = (byte) s.charAt(i);
-                    appendToCodeBuff(b, 1);
+        main:
+        while (curToken.type() == TokenType.STRING && curToken.lexeme().startsWith(".")) {
+            switch (curToken.lexeme()) {
+                // string literal
+                case ".asciz", ".ascii" -> {
+                    consume(TokenType.STRING);
+                    require(curToken.type() == TokenType.STR_LITERAL, "asciz must be string literal");
+                    final String s = curToken.lexeme();
+                    byte b;
+                    for (int i = 0; i < s.length(); i++) {
+                        b = (byte) s.charAt(i);
+                        appendToCodeBuff(b, 1);
+                    }
+
+                    consume(TokenType.STR_LITERAL);
                 }
+                // number
+                case ".long" -> {
+                    consume(TokenType.STRING);
+                    array:
+                    while (curToken.type() != TokenType.EOL) {
+                        final int num = switch (curToken.type()) {
+                            case STRING -> parseCurrentAddrExp(name);
+                            case NUMBER -> {
+                                final int result = IntegerUtils.parseInt(curToken.lexeme());
+                                consume(TokenType.NUMBER);
+                                yield result;
+                            }
+                            case SYMBOL -> {
+                                require(curToken.lexeme().length() == 1, "char must have len 1");
+                                final int result = curToken.lexeme().charAt(0);
+                                consume(TokenType.SYMBOL);
+                                yield result;
+                            }
+                            default -> throw new UnsupportedOperationException();
+                        };
 
-                consume(TokenType.STR_LITERAL);
-            }
-            // number
-            case "long" -> {
-                consume(TokenType.STRING);
-
-                while (curToken.type() != TokenType.EOL) {
-                    final int num = switch (curToken.type()) {
-                        case DOT -> parseCurrentAddrExp(name);
-                        case NUMBER -> {
-                            final int result = IntegerUtils.parseInt(curToken.lexeme());
-                            consume(TokenType.NUMBER);
-                            yield result;
+                        appendToCodeBuff(num, 4);
+                        if (curToken.type() == TokenType.COMMA) {
+                            consume(TokenType.COMMA);
+                        } else {
+                            break array;
                         }
-                        case SYMBOL -> {
-                            require(curToken.lexeme().length() == 1, "char must have len 1");
-                            final int result = curToken.lexeme().charAt(0);
-                            consume(TokenType.SYMBOL);
-                            yield result;
-                        }
-                        default -> throw new UnsupportedOperationException();
-                    };
-
-                    appendToCodeBuff(num, 4);
-                    if (curToken.type() == TokenType.COMMA) {
-                        consume(TokenType.COMMA);
-                    } else {
-                        break;
                     }
                 }
-            }
-            case "fill" -> {
-                consume(TokenType.STRING);
-                final int repeat = IntegerUtils.parseInt(curToken.lexeme());
-                consume(TokenType.NUMBER);
-                consume(TokenType.COMMA);
-                final int size = IntegerUtils.parseInt(curToken.lexeme());
-                consume(TokenType.NUMBER);
-                consume(TokenType.COMMA);
-                final int value = IntegerUtils.parseInt(curToken.lexeme());
-                consume(TokenType.NUMBER);
+                case ".fill" -> {
+                    consume(TokenType.STRING);
+                    final int repeat = IntegerUtils.parseInt(curToken.lexeme());
+                    consume(TokenType.NUMBER);
+                    consume(TokenType.COMMA);
+                    final int size = IntegerUtils.parseInt(curToken.lexeme());
+                    consume(TokenType.NUMBER);
+                    consume(TokenType.COMMA);
+                    final int value = IntegerUtils.parseInt(curToken.lexeme());
+                    consume(TokenType.NUMBER);
 
-                for (int i = 0; i < repeat; i++) {
-                    appendToCodeBuff(value, size);
+                    for (int i = 0; i < repeat; i++) {
+                        appendToCodeBuff(value, size);
+                    }
+                }
+                default -> {
+                    break main;
                 }
             }
-            default -> throw new UnsupportedOperationException();
+            skipCommentsAndNewLines();
         }
-
         if (vars.contains(name)) {
             throw new IllegalStateException("vars duplicate: %s".formatted(name));
         }
         vars.add(name);
     }
 
+    private void skipCommentsAndNewLines() {
+        while (curToken.type() == TokenType.HASHTAG || curToken.type() == TokenType.EOL) {
+            if (curToken.type() == TokenType.HASHTAG) {
+                skipComment();
+            }
+
+            if (curToken.type() == TokenType.EOL) {
+                consume(TokenType.EOL);
+            }
+        }
+    }
     private void appendOpcode(final Opcode opcode, final int operCount) {
         appendToCodeBuff(opcode.code, 1);
         consume(TokenType.STRING);
@@ -454,11 +475,10 @@ public final class Asm {
         }
     }
 
-    private void compileDot() {
-        consume(TokenType.DOT);
+    private void compileSpecial() {
         require(curToken.type() == TokenType.STRING, "after '.' symbol must be string. But: %s".formatted(curToken));
         switch (curToken.lexeme()) {
-            case "equ" -> {
+            case ".equ" -> {
                 consume(TokenType.STRING);
                 final String constantName = curToken.lexeme();
                 consume(TokenType.STRING);
@@ -468,21 +488,21 @@ public final class Asm {
                 consume(TokenType.NUMBER);
                 constants.put(constantName, num);
             }
-            case "globl" -> {
+            case ".globl" -> {
                 consume(TokenType.STRING);
                 final String label = curToken.lexeme();
 
                 globals.add(label);
                 consume(TokenType.STRING);
             }
-            case "text" -> {
+            case ".text" -> {
                 require(textSegStart == -1, "section text must be one");
                 textSegStart = codePos;
                 closeProcessingSections();
                 processedSection = ProcessedSection.TEXT;
                 consume(TokenType.STRING);
             }
-            case "data" -> {
+            case ".data" -> {
                 require(dataSegStart == -1, "section data must be one");
                 dataSegStart = codePos;
                 closeProcessingSections();
@@ -490,18 +510,17 @@ public final class Asm {
                 consume(TokenType.STRING);
             }
 
-            case "section" -> {
+            case ".section" -> {
                 consume(TokenType.STRING);
-                consume(TokenType.DOT);
                 final String sectionName = curToken.lexeme();
                 switch (sectionName) {
-                    case "text" -> {
+                    case ".text" -> {
                         require(textSegStart == -1, "section text must be one");
                         textSegStart = codePos;
                         closeProcessingSections();
                         processedSection = ProcessedSection.TEXT;
                     }
-                    case "data" -> {
+                    case ".data" -> {
                         require(dataSegStart == -1, "section data must be one");
                         dataSegStart = codePos;
                         closeProcessingSections();
@@ -525,7 +544,7 @@ public final class Asm {
         }
     }
 
-    private void compileComment() {
+    private void skipComment() {
         while (curToken.type() != TokenType.EOL) {
             consume();
         }

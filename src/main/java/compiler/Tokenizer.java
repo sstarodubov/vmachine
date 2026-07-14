@@ -50,10 +50,6 @@ public class Tokenizer {
                 pos++;
                 yield new Token(TokenType.HASHTAG, "#");
             }
-            case '.' -> {
-                pos++;
-                yield new Token(TokenType.DOT, ".");
-            }
             case '$' -> {
                 pos++;
                 yield new Token(TokenType.DOLLAR, "$");
