@@ -340,7 +340,7 @@ public final class Asm {
         }
     }
 
-    private int parseVariableExp(final String varName) {
+    private int parseCurrentAddrExp(final String varName) {
         consume(TokenType.DOT);
         final int varPos = labelsToAddress.getOrDefault(varName, -1);
         require(varPos != -1, "var '%s' must be declared".formatted(varName));
@@ -362,12 +362,6 @@ public final class Asm {
         };
     }
 
-    int parseInteger() {
-        final int result = IntegerUtils.parseInt(curToken.lexeme());
-        consume(TokenType.NUMBER);
-        return result;
-    }
-
     private void declareVariable(final String name) {
         consume(TokenType.DOT);
         switch (curToken.lexeme()) {
@@ -376,8 +370,22 @@ public final class Asm {
                 consume(TokenType.STRING);
 
                 while (curToken.type() != TokenType.EOL) {
-                    final int num = curToken.type() == TokenType.DOT ? parseVariableExp(name):
-                            parseInteger();
+                    final int num = switch (curToken.type()) {
+                        case DOT -> parseCurrentAddrExp(name);
+                        case NUMBER -> {
+                            final int result = IntegerUtils.parseInt(curToken.lexeme());
+                            consume(TokenType.NUMBER);
+                            yield result;
+                        }
+                        case SYMBOL -> {
+                            require(curToken.lexeme().length() == 1, "char must have len 1");
+                            final int result = curToken.lexeme().charAt(0);
+                            consume(TokenType.SYMBOL);
+                            yield result;
+                        }
+                        default -> throw new UnsupportedOperationException();
+                    };
+
                     appendToCodeBuff(num, 4);
                     if (curToken.type() == TokenType.COMMA) {
                         consume(TokenType.COMMA);

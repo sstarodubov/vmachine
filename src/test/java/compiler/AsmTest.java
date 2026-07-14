@@ -1165,4 +1165,26 @@ class AsmTest {
 
         assertEquals(65, cpu.statusCode);
     }
+
+    @Test
+    void test54() {
+        final var program = """
+                .globl _start
+                .data
+                charD: .long 'D'  # определяем один символ
+
+                .text
+                _start:
+                    movl charD, %edi  #  в регистре RDI числовой код символа D - 68
+
+                    movl $60, %eax
+                    syscall
+           """;
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+        cpu.run(code);
+
+        assertEquals(68, cpu.statusCode);
+    }
 }
