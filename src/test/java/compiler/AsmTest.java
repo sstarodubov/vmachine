@@ -950,4 +950,28 @@ class AsmTest {
 
         assertEquals(100, cpu.statusCode);
     }
+
+    @Test
+    void test45() {
+        final var program = """
+             .globl _start
+
+              .data
+              nums: .long 11, 12, 13, 14, 15, 16
+
+              .text
+              _start:
+                  movl $nums, %ebx     # помещаем в RBX адрес переменной nums
+                  addl $8, %ebx       # прибавляем к адресу в RBX 8 байт
+                  movl (%ebx), %edi   # помещаем в RDI значение по адресу из RBX (RDI = 12    )
+                  movl $60, %eax
+                  syscall
+                """;
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+        cpu.run(code);
+
+        assertEquals(13, cpu.statusCode);
+    }
 }
