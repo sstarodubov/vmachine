@@ -1028,4 +1028,28 @@ class AsmTest {
 
         assertEquals(15, cpu.statusCode);
     }
+
+    @Test
+    void test48() {
+        final var program = """
+           .globl _start
+           .data
+           num1: .long 45
+           nums: .long 11, 12, 13, 14, 15, 16
+
+           .text
+           _start:
+               movl $nums, %ebx     # помещаем в RBX адрес массива nums
+               movl 8(%ebx), %edi   # RDI =  значение по адресу (RBX+4)
+
+               movl $60, %eax
+               syscall
+           """;
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+        cpu.run(code);
+
+        assertEquals(13, cpu.statusCode);
+    }
 }
