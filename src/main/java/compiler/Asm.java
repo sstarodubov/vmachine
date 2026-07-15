@@ -330,7 +330,7 @@ public final class Asm {
                 consume(TokenType.STRING);
                 consume(TokenType.COLON);
                 labelsToAddress.put(name, codePos);
-
+                skipCommentsAndNewLines();
                 if (curToken.type() == TokenType.STRING && curToken.lexeme().startsWith(".")) {
                      declareVariable(name);
                 }
@@ -385,13 +385,14 @@ public final class Asm {
     private VarInfo handleVarName(final String name) {
             consume(TokenType.STRING);
             return switch (vars.get(name)) {
-                case LONG -> new VarInfo(codeBuff.getInt(labelsToAddress.get(name)), VarType.LONG);
-                case VarType type -> new VarInfo(labelsToAddress.get(name), type);
+                case LONG -> new VarInfo(codeBuff.getInt(labelsToAddress.get(name)), VarType.LONG);//если число передаем по значению
+                case VarType type -> new VarInfo(labelsToAddress.get(name), type); // в остальных случаях передаем адресс
             };
     }
 
     private void declareVariable(final String name) {
-        final var types = new ArrayList<VarType>();
+        skipCommentsAndNewLines();
+        final var curVarFieldTypes = new ArrayList<VarType>();
         main:
         while (curToken.type() == TokenType.STRING && curToken.lexeme().startsWith(".")) {
             switch (curToken.lexeme()) {
@@ -401,7 +402,7 @@ public final class Asm {
                     require(curToken.type() == TokenType.STR_LITERAL, "ascii must be string literal");
                     final String s = curToken.lexeme();
                     byte b;
-                    types.add(VarType.ASCII);
+                    curVarFieldTypes.add(VarType.ASCII);
                     for (int i = 0; i < s.length(); i++) {
                         b = (byte) s.charAt(i);
                         appendToCodeBuff(b, 1);
@@ -446,9 +447,9 @@ public final class Asm {
                     }
                     //define type of handled variable
                     if (fieldCounts > 1) {
-                        types.add(VarType.STRUCTURE);
+                        curVarFieldTypes.add(VarType.STRUCTURE);
                     } else {
-                        types.add(lastFieldType);
+                        curVarFieldTypes.add(lastFieldType);
                     }
                 }
                 case ".fill" -> {
@@ -461,7 +462,7 @@ public final class Asm {
                     consume(TokenType.COMMA);
                     final int value = IntegerUtils.parseInt(curToken.lexeme());
                     consume(TokenType.NUMBER);
-                    types.add(VarType.STRUCTURE);
+                    curVarFieldTypes.add(VarType.STRUCTURE);
                     for (int i = 0; i < repeat; i++) {
                         appendToCodeBuff(value, size);
                     }
@@ -475,7 +476,7 @@ public final class Asm {
         if (vars.containsKey(name)) {
             throw new IllegalStateException("vars duplicate: %s".formatted(name));
         }
-        vars.put(name, defineVarType(types));
+        vars.put(name, defineVarType(curVarFieldTypes));
     }
 
     private VarType defineVarType(final List<VarType> fieldTypes) {

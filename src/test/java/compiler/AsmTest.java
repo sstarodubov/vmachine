@@ -1331,7 +1331,8 @@ class AsmTest {
                     alice_name_size: .long .- alice
                     
                     # условная структура
-                    person: .long alice
+                    person:
+                            .long alice  #имя алисы
                             .long alice_name_size   
                             .long 34     
                     
