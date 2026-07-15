@@ -311,6 +311,8 @@ public final class Asm {
 
         //opcodes
         switch (Opcode.fromString(curToken.lexeme())) {
+            case POPL -> appendOpcode(Opcode.POPL, 1);
+            case PUSHL -> appendOpcode(Opcode.PUSHL, 1);
             case LEAL -> appendOpcode(Opcode.LEAL, 2);
             case MOVL -> appendOpcode(Opcode.MOVL, 2);
             case CMOVCL -> appendOpcode(Opcode.CMOVCL, 2);

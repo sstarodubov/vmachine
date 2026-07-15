@@ -1368,4 +1368,25 @@ class AsmTest {
         }
         System.setOut(origin);
     }
+
+    @Test
+    void test60() {
+            final var program = """
+                    .globl _start
+                    
+                    .text
+                    _start:
+                        movl $15, %edx
+                        pushl %edx            # в стек помещаем содержимое регистра RDX
+                        popl %edi            # значение из вершины стека помещаем в регистр RDI
+                        movl $60, %eax
+                        syscall
+                    """;
+            final var asm = new Asm(program);
+            final ByteBuffer code = asm.compile();
+            final var cpu = new CPU();
+            cpu.run(code);
+
+            assertEquals(15, cpu.statusCode);
+    }
 }

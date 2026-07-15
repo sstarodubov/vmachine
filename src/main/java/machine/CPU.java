@@ -44,9 +44,21 @@ public final class CPU {
         return val;
     }
 
+    public void pushInt(final int data) {
+        regStorage.sub4Esp();
+        final int addr = regStorage.readEsp();
+        memory.writeInt(addr, data);
+    }
+
+    public int popInt() {
+        final int addr = regStorage.readEsp();
+        regStorage.add4Esp();
+        return memory.readInt(addr);
+    }
 
     public int run(final ByteBuffer code) {
         memory.loadCode(code);
+        regStorage.writeEsp(memory.size());
         regStorage.writeEip(code.getInt(0));
 
         /*
@@ -60,6 +72,20 @@ public final class CPU {
             curOpcode = Opcode.fromByte(curByte);
             require(curOpcode != null, "unknown opcode: %d".formatted(curByte));
             switch (curOpcode) {
+                case POPL -> {
+                    final Operand operand = readOperand();
+                    require(operand instanceof Register, "pushl operand must be register");
+                    final int register = operand.value();
+                    final int data = popInt();
+                    regStorage.writeInt(register, data);
+                }
+                case PUSHL -> {
+                   final Operand operand = readOperand();
+                   require(operand instanceof Register, "pushl operand must be register");
+                   final int register = operand.value();
+                   final int data = regStorage.readInt(register);
+                   pushInt(data);
+                }
                 case LEAL -> {
                     final Operand first = readOperand();
                     final int source = switch (first) {

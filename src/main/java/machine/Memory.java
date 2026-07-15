@@ -4,6 +4,8 @@ import machine.utils.Assertions;
 
 import java.nio.ByteBuffer;
 
+import static machine.utils.Assertions.require;
+
 public final class Memory {
 
     private final ByteBuffer mem;
@@ -11,13 +13,24 @@ public final class Memory {
     private int textSegEndIdx = -1;
     private int dataSegStartIdx = -1;
     private int dataSegEndIdx = -1;
-
+    private final int memSize = 516;
+    private final int stackSize = 64;
     public Memory(ByteBuffer mem) {
         this.mem = mem;
     }
 
     public Memory() {
-        this.mem = ByteBuffer.allocate(1024);
+        this.mem = ByteBuffer.allocate(memSize);
+    }
+
+    public void print(final int from, final int to) {
+        for (int i = from; i < to; i++) {
+            System.out.printf("%d:  %d%n", i, mem.get(i));
+        }
+    }
+
+    public int size() {
+       return memSize;
     }
 
     public int textSegmentSize() {
@@ -29,8 +42,10 @@ public final class Memory {
     }
 
     public void writeInt(final int offset, final int data) {
-        Assertions.require(offset >= dataSegStartIdx, "seg fault: %d".formatted(offset));
-        Assertions.require(offset <= dataSegEndIdx, "seg fault: %d".formatted(offset));
+        require(
+                (offset >= dataSegStartIdx && offset <= dataSegEndIdx) ||
+                        offset >= size() - stackSize, "segfault: %d".formatted(offset)
+        );
 
         this.mem.putInt(offset, data);
     }
@@ -68,6 +83,5 @@ public final class Memory {
         this.dataSegEndIdx = dataSegmentEnd;
 
         mem.put(code);
-        mem.limit(code.limit());
     }
 }

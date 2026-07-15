@@ -39,8 +39,9 @@ public enum Opcode {
     SHLL((byte) 29, "shll"),
     SHRL((byte) 30, "shrl"),
     SARL((byte) 31, "sarl"),
-    LEAL((byte) 32, "leal");
-
+    LEAL((byte) 32, "leal"),
+    PUSHL((byte) 33, "pushl"),
+    POPL((byte) 34, "popl");
 
     public final byte code;
     public final String name;

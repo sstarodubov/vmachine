@@ -179,6 +179,37 @@ public final class RegStorage {
         writeInt(esp, val);
     }
 
+    public void addEsp(final int d) {
+        final int val = readEsp();
+        writeEsp(val + d);
+    }
+
+    public void subEsp(final int d) {
+        final int val = readEsp();
+        writeEsp(val - d);
+    }
+
+    public void add4Esp() {
+        final int val = readEsp();
+        writeEsp(val + 4);
+    }
+
+    public void sub4Esp() {
+        final int val = readEsp();
+        writeEsp(val - 4);
+    }
+
+    public void incEsp() {
+        final int val = readEsp();
+        writeEsp(val + 1);
+    }
+
+    public void decEsp() {
+        final int val = readEsp();
+        writeEsp(val - 1);
+    }
+
+
     //ebx
     public int readEbx() {
         return readInt(ebx);
