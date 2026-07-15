@@ -44,6 +44,18 @@ public final class CPU {
         return val;
     }
 
+    public void pushByte(final byte data) {
+        regStorage.decEsp();
+        final int addr = regStorage.readEsp();
+        memory.writeByte(addr, data);
+    }
+
+    public byte popByte() {
+        final int addr = regStorage.readEsp();
+        regStorage.incEsp();
+        return memory.readByte(addr);
+    }
+
     public void pushInt(final int data) {
         regStorage.sub4Esp();
         final int addr = regStorage.readEsp();
@@ -72,6 +84,22 @@ public final class CPU {
             curOpcode = Opcode.fromByte(curByte);
             require(curOpcode != null, "unknown opcode: %d".formatted(curByte));
             switch (curOpcode) {
+                case PUSHFQ -> {
+                    pushByte(regStorage.readByte(RegStorage.cf));
+                    pushByte(regStorage.readByte(RegStorage.of));
+                    pushByte(regStorage.readByte(RegStorage.zf));
+                    pushByte(regStorage.readByte(RegStorage.sf));
+                }
+                case POPFQ -> {
+                    final byte sf = popByte();
+                    final byte zf = popByte();
+                    final byte of = popByte();
+                    final byte cf = popByte();
+                    regStorage.writeByte(RegStorage.sf, sf);
+                    regStorage.writeByte(RegStorage.zf, zf);
+                    regStorage.writeByte(RegStorage.of, of);
+                    regStorage.writeByte(RegStorage.cf, cf);
+                }
                 case POPL -> {
                     final Operand operand = readOperand();
                     require(operand instanceof Register, "pushl operand must be register");

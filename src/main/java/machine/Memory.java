@@ -13,7 +13,7 @@ public final class Memory {
     private int textSegEndIdx = -1;
     private int dataSegStartIdx = -1;
     private int dataSegEndIdx = -1;
-    private final int memSize = 516;
+    private final int memSize = 256;
     private final int stackSize = 64;
     public Memory(ByteBuffer mem) {
         this.mem = mem;
@@ -48,6 +48,14 @@ public final class Memory {
         );
 
         this.mem.putInt(offset, data);
+    }
+
+    public void writeByte(final int offset, final byte data) {
+        mem.put(offset, data);
+    }
+
+    public byte readByte(final int offset) {
+        return mem.get(offset);
     }
 
     public byte readTextByte(final int offset) {

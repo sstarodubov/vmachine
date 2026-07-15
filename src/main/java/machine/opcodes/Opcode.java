@@ -41,7 +41,10 @@ public enum Opcode {
     SARL((byte) 31, "sarl"),
     LEAL((byte) 32, "leal"),
     PUSHL((byte) 33, "pushl"),
-    POPL((byte) 34, "popl");
+    POPL((byte) 34, "popl"),
+    PUSHFQ((byte) 35, "pushfq"),
+    POPFQ((byte) 36, "popfq")
+    ;
 
     public final byte code;
     public final String name;

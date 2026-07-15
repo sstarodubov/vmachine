@@ -1,6 +1,7 @@
 package compiler;
 
 import machine.CPU;
+import machine.RegStorage;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -1388,5 +1389,58 @@ class AsmTest {
             cpu.run(code);
 
             assertEquals(15, cpu.statusCode);
+    }
+    @Test
+    void test61() {
+        final var program = """
+                .globl _start
+                 .text
+                 _start:
+                     pushfq      # сохраняем значения флагов
+                     movl $0x7fffffff, %eax
+                     addl $2, %eax
+                     popfq       # восстанавливаем значения флагов
+                     jc set      # если флаг CF установлен, переход к метке set
+                     movl $2, %edi
+                     jmp exit
+                 set:
+                     movl $3, %edi
+                 exit:
+                     movl $60, %eax
+                     syscall""";
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+        cpu.run(code);
+
+        assertEquals(2, cpu.statusCode);
+    }
+
+    @Test
+    void test62() {
+
+        final var program = """
+                .globl _start
+                 .text
+                 _start:
+                     pushfq      # сохраняем значения флагов
+                     popfq       # восстанавливаем значения флагов
+                     
+                    """;
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+
+        cpu.regStorage.writeByte(RegStorage.sf, (byte) 1);
+        cpu.regStorage.writeByte(RegStorage.zf, (byte) 2);
+        cpu.regStorage.writeByte(RegStorage.of, (byte) 3);
+        cpu.regStorage.writeByte(RegStorage.cf, (byte) 4);
+        cpu.run(code);
+
+        assertEquals(1, cpu.regStorage.readByte(RegStorage.sf));
+        assertEquals(2, cpu.regStorage.readByte(RegStorage.zf));
+        assertEquals(3, cpu.regStorage.readByte(RegStorage.of));
+        assertEquals(4, cpu.regStorage.readByte(RegStorage.cf));
+        assertEquals(cpu.memory.size(), cpu.regStorage.readEsp());
     }
 }
