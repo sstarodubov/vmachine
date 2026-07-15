@@ -2,6 +2,7 @@ package compiler;
 
 import compiler.operand.*;
 import compiler.operand.Number;
+import compiler.vars.VarType;
 import machine.opcodes.Opcode;
 import machine.OperandType;
 import machine.RegStorage;
@@ -17,7 +18,7 @@ public final class Asm {
     enum ProcessedSection {
         BSS, TEXT, DATA, INIT
     }
-
+    record VarInfo(int num, VarType type) {}
     private ProcessedSection processedSection = INIT;
     private final Tokenizer tokenizer;
     private Token curToken = null;
@@ -25,9 +26,9 @@ public final class Asm {
     private final List<String> globals = new ArrayList<>();
     private final Map<String, Integer> labelsToAddress = new HashMap<>();
     private final Map<String, List<Integer>> labelsPosition = new HashMap<>();
-    private final Set<String> vars = new HashSet<>();
+    private final Map<String, VarType> vars = new HashMap<>();
     private final Map<String, Integer> constants = new HashMap<>();
-
+    
     int codePos = 32  /*32 bytes for header*/;
     int textSegStart = -1;
     int textSegEnd = -1;
@@ -258,9 +259,9 @@ public final class Asm {
                     yield new IndirectAddr();
                 }
                 // case varialbe
-                if (vars.contains(str)) {
+                if (vars.containsKey(str)) {
                     appendVarOperand(str);
-                    yield new Var();
+                    yield new VarOperand();
                 } else {
                     //case label
                     appendLabelOperand(str);
@@ -296,7 +297,7 @@ public final class Asm {
         consume(TokenType.COMMA);
 
         final Operand second = compileOperands1();
-        require(second instanceof Register || second instanceof Var,
+        require(second instanceof Register || second instanceof VarOperand,
                 "second operator must be register or variable");
     }
 
@@ -360,7 +361,7 @@ public final class Asm {
         }
     }
 
-    private int parseCurrentAddrExp(final String varName) {
+    private VarInfo parseCurrentAddrExp(final String varName) {
         final int varPos = labelsToAddress.getOrDefault(varName, -1);
         require(varPos != -1, "var '%s' must be declared".formatted(varName));
 
@@ -369,28 +370,38 @@ public final class Asm {
                 consume(TokenType.STRING);
                 final int result = varPos - labelsToAddress.get(curToken.lexeme());
                 consume(TokenType.STRING);
-                yield result;
+                yield new VarInfo(result, VarType.LONG);
            }
            case ".+" -> {
                consume(TokenType.STRING);
                final int result = varPos + labelsToAddress.get(curToken.lexeme());
                consume(TokenType.STRING);
-               yield result;
+               yield new VarInfo(result, VarType.LONG);
            }
-           default -> varPos;
+           default -> new VarInfo(varPos, VarType.LONG);
         };
     }
 
+    private VarInfo handleVarName(final String name) {
+            consume(TokenType.STRING);
+            return switch (vars.get(name)) {
+                case LONG -> new VarInfo(codeBuff.getInt(labelsToAddress.get(name)), VarType.LONG);
+                case VarType type -> new VarInfo(labelsToAddress.get(name), type);
+            };
+    }
+
     private void declareVariable(final String name) {
+        final var types = new ArrayList<VarType>();
         main:
         while (curToken.type() == TokenType.STRING && curToken.lexeme().startsWith(".")) {
             switch (curToken.lexeme()) {
                 // string literal
                 case ".asciz", ".ascii" -> {
                     consume(TokenType.STRING);
-                    require(curToken.type() == TokenType.STR_LITERAL, "asciz must be string literal");
+                    require(curToken.type() == TokenType.STR_LITERAL, "ascii must be string literal");
                     final String s = curToken.lexeme();
                     byte b;
+                    types.add(VarType.ASCII);
                     for (int i = 0; i < s.length(); i++) {
                         b = (byte) s.charAt(i);
                         appendToCodeBuff(b, 1);
@@ -400,31 +411,44 @@ public final class Asm {
                 }
                 // number
                 case ".long" -> {
+                    int fieldCounts = 0;
+                    VarType lastFieldType = null;
                     consume(TokenType.STRING);
                     array:
                     while (curToken.type() != TokenType.EOL) {
-                        final int num = switch (curToken.type()) {
-                            case STRING -> parseCurrentAddrExp(name);
+                        final VarInfo info = switch (curToken.type()) {
+                            case STRING -> switch (curToken.lexeme()) {
+                                case String curAddrOperator when curAddrOperator.startsWith(".") -> parseCurrentAddrExp(name);
+                                case String varName when vars.containsKey(varName) -> handleVarName(varName);
+                                default -> throw new UnsupportedOperationException();
+                            };
                             case NUMBER -> {
                                 final int result = IntegerUtils.parseInt(curToken.lexeme());
                                 consume(TokenType.NUMBER);
-                                yield result;
+                                yield new VarInfo(result, VarType.LONG);
                             }
                             case SYMBOL -> {
                                 require(curToken.lexeme().length() == 1, "char must have len 1");
                                 final int result = curToken.lexeme().charAt(0);
                                 consume(TokenType.SYMBOL);
-                                yield result;
+                                yield new VarInfo(result, VarType.LONG);
                             }
                             default -> throw new UnsupportedOperationException();
                         };
-
-                        appendToCodeBuff(num, 4);
+                        fieldCounts++;
+                        lastFieldType = info.type();
+                        appendToCodeBuff(info.num(), 4);
                         if (curToken.type() == TokenType.COMMA) {
                             consume(TokenType.COMMA);
                         } else {
                             break array;
                         }
+                    }
+                    //define type of handled variable
+                    if (fieldCounts > 1) {
+                        types.add(VarType.STRUCTURE);
+                    } else {
+                        types.add(lastFieldType);
                     }
                 }
                 case ".fill" -> {
@@ -437,7 +461,7 @@ public final class Asm {
                     consume(TokenType.COMMA);
                     final int value = IntegerUtils.parseInt(curToken.lexeme());
                     consume(TokenType.NUMBER);
-
+                    types.add(VarType.STRUCTURE);
                     for (int i = 0; i < repeat; i++) {
                         appendToCodeBuff(value, size);
                     }
@@ -448,10 +472,18 @@ public final class Asm {
             }
             skipCommentsAndNewLines();
         }
-        if (vars.contains(name)) {
+        if (vars.containsKey(name)) {
             throw new IllegalStateException("vars duplicate: %s".formatted(name));
         }
-        vars.add(name);
+        vars.put(name, defineVarType(types));
+    }
+
+    private VarType defineVarType(final List<VarType> fieldTypes) {
+        if (fieldTypes.size() == 1) {
+            return fieldTypes.getFirst();
+        }
+
+        return VarType.STRUCTURE;
     }
 
     private void skipCommentsAndNewLines() {

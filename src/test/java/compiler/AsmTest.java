@@ -1316,4 +1316,55 @@ class AsmTest {
 
         System.setOut(origin);
     }
+
+    @Test
+    void test59() {
+        final var origin = System.out;
+        try(var out = new ByteArrayOutputStream()) {
+            System.setOut(new PrintStream(out));
+
+            final var program = """
+                    .globl _start
+                    
+                    .data
+                    alice: .ascii "Alice"
+                    alice_name_size: .long .- alice
+                    
+                    # условная структура
+                    person: .long alice
+                            .long alice_name_size   
+                            .long 34     
+                    
+                    # смещение компонентов в структуре
+                    .equ NAME_OFFSET, 0
+                    .equ NAME_SIZE_OFFSET, 4
+                    .equ AGE_OFFSET, 8 
+                    
+                    .text
+                    _start:
+                        movl $person, %ebx
+                        movl NAME_OFFSET(%ebx), %esi  # в RSI - адрес строки
+                    
+                        movl $1, %edi        # в RDI - дексриптор вывода в стандартный поток (консоль)
+                        movl NAME_SIZE_OFFSET(%ebx), %edx    # в RDX - длина строки
+                        movl $1, %eax        # в RAX - номер функции для вывода в поток\s
+                    
+                        syscall              # вызываем функцию Linux
+                    
+                        movl AGE_OFFSET(%ebx), %edi  # в RDI - возраст
+                        movl $60, %eax
+                        syscall
+                    """;
+            final var asm = new Asm(program);
+            final ByteBuffer code = asm.compile();
+            final var cpu = new CPU();
+            cpu.run(code);
+
+            assertEquals(34, cpu.statusCode);
+            assertEquals("Alice\n", out.toString());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        System.setOut(origin);
+    }
 }
