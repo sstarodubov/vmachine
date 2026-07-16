@@ -1519,4 +1519,33 @@ class AsmTest {
         cpu.run(code);
         assertEquals(13, cpu.statusCode);
     }
+
+    @Test
+    void test66() {
+        final var program = """
+             .globl _start
+             .text
+             _start:
+                 subl $8, %esp     # резервируем в стеке 16 байт
+
+                 movl $12, %ecx
+                 movl $13, %edx
+
+                 movl %ecx, 4(%esp)     # 4(%rsp) = 12
+                 movl %edx, (%esp)     # (%rsp) = 13
+
+                 movl (%esp), %edi      # rdi= 13
+                 addl 4(%esp), %edi      # rdi = rdi + 12
+
+                 addl $8, %esp     # восстанавливаем значение стека
+
+                 movl $60, %eax
+                 syscall""";
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+
+        cpu.run(code);
+        assertEquals(25, cpu.statusCode);
+    }
 }
