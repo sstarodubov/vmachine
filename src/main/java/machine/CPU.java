@@ -26,6 +26,15 @@ public final class CPU {
 
     public int statusCode = 0;
 
+    public int readStackInt(final int offset) {
+        return memory.readInt(regStorage.readEsp() + offset);
+    }
+
+    public byte readStackByte(final int offset) {
+        return memory.readByte(regStorage.readEsp() + offset);
+    }
+
+
     private byte readTextByte() {
         final int ip = regStorage.readEip();
         regStorage.incEip();
@@ -109,9 +118,13 @@ public final class CPU {
                 }
                 case PUSHL -> {
                    final Operand operand = readOperand();
-                   require(operand instanceof Register, "pushl operand must be register");
-                   final int register = operand.value();
-                   final int data = regStorage.readInt(register);
+                   require(operand instanceof Register
+                           || operand instanceof Number, "pushl operand must be register or number");
+                   final int data = switch (operand) {
+                       case Register(int id) -> regStorage.readInt(id);
+                       case Number(int n) -> n;
+                       default -> throw new UnsupportedOperationException();
+                   };
                    pushInt(data);
                 }
                 case LEAL -> {

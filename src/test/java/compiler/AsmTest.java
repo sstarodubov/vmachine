@@ -1443,4 +1443,80 @@ class AsmTest {
         assertEquals(4, cpu.regStorage.readByte(RegStorage.cf));
         assertEquals(cpu.memory.size(), cpu.regStorage.readEsp());
     }
+
+    @Test
+    void test63() {
+        final var program = """
+                .globl _start
+                .text
+                _start:
+                    movl $11, %edi
+                    movl $33, %edx
+                
+                    pushl %edi
+                    pushl %edx
+                
+                    addl $8, %esp     # прибавляем к адресу в RSP 16 байт\s
+                
+                    movl $60, %eax
+                    syscall
+                    """;
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+        cpu.run(code);
+        assertEquals(cpu.memory.size(), cpu.regStorage.readEsp());
+    }
+
+    @Test
+    void test64() {
+        final var program = """
+             .globl _start
+
+             .text
+             _start:
+                 subl $8, %esp  # резервируем в стеке 16 байт
+                 movl $11, %edx
+                 movl %edx, (%esp)       # помещаем в стек значение регистра RDX
+                 movl (%esp), %edi      # в RDI помещаем значение по адресу из RSP - число 11\s
+
+                 addl $8, %esp     # восстанавливаем значение стека
+
+                 movl $60, %eax
+                 syscall
+                    """;
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+
+        cpu.run(code);
+        assertEquals(11, cpu.readStackInt(-8));
+        assertEquals(11, cpu.statusCode);
+    }
+
+    @Test
+    void test65() {
+        final var program = """
+               .globl _start
+              .text
+              _start:
+                  pushl $12
+                  pushl $13
+                  pushl $14
+                  pushl $15
+
+                  movl 8(%esp), %edi      # 16(%rsp) - адрес значения 13
+
+                  addl $16, %esp     # восстанавливаем значение стека
+
+                  movl $60, %eax
+                  syscall
+                    """;
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+
+        cpu.run(code);
+        assertEquals(13, cpu.statusCode);
+    }
 }

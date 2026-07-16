@@ -14,12 +14,15 @@ public final class Memory {
     private int dataSegStartIdx = -1;
     private int dataSegEndIdx = -1;
     private final int memSize = 256;
-    private final int stackSize = 64;
+    private final int stackSize;
+
     public Memory(ByteBuffer mem) {
+        this.stackSize = mem.capacity();
         this.mem = mem;
     }
 
     public Memory() {
+        this.stackSize = 256;
         this.mem = ByteBuffer.allocate(memSize);
     }
 

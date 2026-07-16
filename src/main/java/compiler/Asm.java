@@ -297,8 +297,8 @@ public final class Asm {
         consume(TokenType.COMMA);
 
         final Operand second = compileOperands1();
-        require(second instanceof Register || second instanceof VarOperand,
-                "second operator must be register or variable");
+        require(second instanceof Register || second instanceof VarOperand || second instanceof IndirectAddr,
+                "second operator must be register or variable or indirect");
     }
 
 
