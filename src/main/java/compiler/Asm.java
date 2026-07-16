@@ -311,6 +311,14 @@ public final class Asm {
 
         //opcodes
         switch (Opcode.fromString(curToken.lexeme())) {
+            case REP -> {
+               appendToCodeBuff(Opcode.REP.code, 1);
+               consume(TokenType.STRING);
+            }
+            case MOVSB -> {
+                appendToCodeBuff(Opcode.MOVSB.code, 1);
+                consume(TokenType.STRING);
+            }
             case PUSHFQ -> {
                 appendToCodeBuff(Opcode.PUSHFQ.code, 1);
                 consume(TokenType.STRING);

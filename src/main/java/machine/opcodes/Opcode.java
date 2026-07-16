@@ -43,7 +43,9 @@ public enum Opcode {
     PUSHL((byte) 33, "pushl"),
     POPL((byte) 34, "popl"),
     PUSHFQ((byte) 35, "pushfq"),
-    POPFQ((byte) 36, "popfq")
+    POPFQ((byte) 36, "popfq"),
+    REP((byte) 37, "rep"),
+    MOVSB((byte) 38,  "movsb")
     ;
 
     public final byte code;

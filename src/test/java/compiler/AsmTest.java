@@ -1548,4 +1548,35 @@ class AsmTest {
         cpu.run(code);
         assertEquals(25, cpu.statusCode);
     }
+
+    @Test
+    void test67() {
+        final var program = """
+              .globl _start
+              .data
+                  nums1: .ascii "hello world" 
+                  nums2: .fill 11, 1, 0  
+                  num: .long 100 
+              .text
+              _start:
+                  movl $nums1, %esi   # в RSI - откуда копируем
+                  movl $nums2, %edi   # в RDI - куда копируем
+                  movl $11, %ecx       # в RCX - сколько копируем
+                  movl $nums2, %edx
+                  rep movsb               # выполняем копирование
+                                      """;
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+
+        cpu.run(code);
+        System.out.println(cpu.regStorage.readEdi());
+        int addr = cpu.regStorage.readEdx();
+        var sb = new StringBuilder();
+        for (int i = 0; i < 11; i++) {
+           sb.append((char) cpu.memory.readByte(addr++));
+        }
+
+        assertEquals("hello world", sb.toString());
+    }
 }

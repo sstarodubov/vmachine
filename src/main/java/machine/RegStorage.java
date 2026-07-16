@@ -148,7 +148,7 @@ public final class RegStorage {
         return readInt(edi);
     }
 
-    public void wrieEdi(int val) {
+    public void writeEdi(int val) {
         writeInt(edi, val);
     }
 

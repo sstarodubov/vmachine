@@ -92,228 +92,245 @@ public final class CPU {
             curByte = readTextByte();
             curOpcode = Opcode.fromByte(curByte);
             require(curOpcode != null, "unknown opcode: %d".formatted(curByte));
-            switch (curOpcode) {
-                case PUSHFQ -> {
-                    pushByte(regStorage.readByte(RegStorage.cf));
-                    pushByte(regStorage.readByte(RegStorage.of));
-                    pushByte(regStorage.readByte(RegStorage.zf));
-                    pushByte(regStorage.readByte(RegStorage.sf));
-                }
-                case POPFQ -> {
-                    final byte sf = popByte();
-                    final byte zf = popByte();
-                    final byte of = popByte();
-                    final byte cf = popByte();
-                    regStorage.writeByte(RegStorage.sf, sf);
-                    regStorage.writeByte(RegStorage.zf, zf);
-                    regStorage.writeByte(RegStorage.of, of);
-                    regStorage.writeByte(RegStorage.cf, cf);
-                }
-                case POPL -> {
-                    final Operand operand = readOperand();
-                    require(operand instanceof Register, "pushl operand must be register");
-                    final int register = operand.value();
-                    final int data = popInt();
-                    regStorage.writeInt(register, data);
-                }
-                case PUSHL -> {
-                   final Operand operand = readOperand();
-                   require(operand instanceof Register
-                           || operand instanceof Number, "pushl operand must be register or number");
-                   final int data = switch (operand) {
-                       case Register(int id) -> regStorage.readInt(id);
-                       case Number(int n) -> n;
-                       default -> throw new UnsupportedOperationException();
-                   };
-                   pushInt(data);
-                }
-                case LEAL -> {
-                    final Operand first = readOperand();
-                    final int source = switch (first) {
-                        case MemoryVar(int addr) -> addr;
-                        default -> throw new UnsupportedOperationException();
-                    };
-                    final Operand second = readOperand();
-                    final int dest = switch (second) {
-                        case Register(int id) -> id;
-                        default -> throw new UnsupportedOperationException();
-                    };
-
-                    regStorage.writeInt(dest, source);
-                }
-                case SARL -> doSh((data, sh) -> data >> sh, sh -> 0x1 << Math.max(sh - 1, 0));
-                case SHRL -> doSh((data, sh) -> data >>> sh, sh -> 1 << Math.max(sh - 1, 0));
-                case SHLL -> doSh((data, sh) -> data << sh, sh -> 0x80_00_00_00 >>> Math.max(sh - 1, 0));
-                case NEGL -> doBitwise1(a -> a * -1);
-                case NOTL -> doBitwise1(a -> ~a);
-                case XORL -> doBitwise2((a, b) -> a ^ b);
-                case ORL -> doBitwise2((a, b) -> a | b);
-                case ANDL -> doBitwise2((a, b) -> a & b);
-                case CMOVNCL -> doMoveIf(() -> !regStorage.readCF());
-                case CMOVCL -> doMoveIf(regStorage::readCF);
-                case MOVL -> doMoveIf(() -> true);
-                case CMOVEL -> doMoveIf(regStorage::readZF);
-                case CMOVNEL -> doMoveIf(() -> !regStorage.readZF());
-                case SYSCALL -> {
-                    final int syscallId = regStorage.readEax();
-                    sysCallTable.executeOn(this, syscallId);
-                }
-                case NOP -> {
-                    // skip
-                }
-                case ADDL -> {
-                    final SingleTransfer t = prepareMathOpTransfer(Long::sum);
-                    final int data = t.from().value();
-                    final int register = t.to().value();
-                    regStorage.writeInt(register, data);
-                }
-                case SUBL -> {
-                    final SingleTransfer t = prepareMathOpTransfer((a, b) -> b - a);
-                    final int data = t.from().value();
-                    final int register = t.to().value();
-                    regStorage.writeInt(register, data);
-                }
-                case INQL -> {
-                    final SingleTransfer t = prepareIncrementTransfer(a -> a + 1);
-                    final int data = t.from().value();
-                    final int register = t.to().value();
-                    regStorage.writeInt(register, data);
-                }
-                case DECL -> {
-                    final SingleTransfer t = prepareIncrementTransfer(a -> a - 1);
-                    final int data = t.from().value();
-                    final int register = t.to().value();
-                    regStorage.writeInt(register, data);
-                }
-                case MULL -> {
-                    final Transfer t = prepareMullTransfer();
-                    switch (t) {
-                        case SingleTransfer(Operand num, Operand eax) -> {
-                            final int data = num.value();
-                            final int id = eax.value();
-                            regStorage.writeInt(id, data);
-                            regStorage.writeInt(RegStorage.edx, 0);
-                        }
-                        case DoubleTransfer(SingleTransfer edx, SingleTransfer eax) -> {
-                            final int edxVal = edx.from().value();
-                            final int edxId = edx.to().value();
-                            regStorage.writeInt(edxId, edxVal);
-
-                            final int eaxVal = eax.from().value();
-                            final int eaxId = eax.to().value();
-                            regStorage.writeInt(eaxId, eaxVal);
-                        }
-                    }
-                }
-                case LOOPL -> {
-                    final Operand operand = readOperand();
-                    regStorage.writeEcx(regStorage.readEcx() - 1);
-                    if (regStorage.readEcx() != 0) {
-                        doJump(operand);
-                    }
-                }
-                case JMP -> {
-                    final Operand operand = readOperand();
-                    doJump(operand);
-                }
-                case JC -> {
-                    final Operand operand = readOperand();
-                    if (regStorage.readCF()) {
-                        doJump(operand);
-                    }
-                }
-                case JZ -> {
-                    final Operand operand = readOperand();
-                    if (regStorage.readZF()) {
-                        doJump(operand);
-                    }
-                }
-                case JNZ -> {
-                    final Operand operand = readOperand();
-                    if (!regStorage.readZF()) {
-                        doJump(operand);
-                    }
-                }
-                case CMPL -> {
-                    final Operand op1 = readOperand();
-                    final Operand op2 = readOperand();
-
-                    final long val1 = switch (op1) {
-                        case Number(int num) -> num;
-                        case Register(int id) -> regStorage.readInt(id);
-                        default -> throw new UnsupportedOperationException();
-                    };
-                    final long val2 = switch (op2) {
-                        case Number(int num) -> num;
-                        case Register(int id) -> regStorage.readInt(id);
-                        default -> throw new UnsupportedOperationException();
-                    };
-
-                    final long diff = val2 - val1;
-                    if (diff == 0) {
-                        regStorage.setZF();
-                    } else {
-                        regStorage.clearOF();
-                    }
-
-                    if (diff < 0) {
-                        regStorage.setSF();
-                    } else {
-                        regStorage.clearCF();
-                    }
-
-                    if (val2 < val1) {
-                        regStorage.setCF();
-                    } else {
-                        regStorage.clearCF();
-                    }
-
-                    if (diff > Integer.MAX_VALUE || diff < Integer.MIN_VALUE) {
-                        regStorage.setOF();
-                    } else {
-                        regStorage.clearOF();
-                    }
-                }
-                case JE -> {
-                    final var oper = readOperand();
-                    if (regStorage.readZF()) {
-                        doJump(oper);
-                    }
-                }
-                case JNE -> {
-                    final var oper = readOperand();
-                    if (!regStorage.readZF()) {
-                        doJump(oper);
-                    }
-                }
-                case JG -> {
-                    final var oper = readOperand();
-                    if (regStorage.readCF() == regStorage.readOF() && !regStorage.readZF()) {
-                        doJump(oper);
-                    }
-                }
-                case JGE -> {
-                    final var oper = readOperand();
-                    if (regStorage.readCF() == regStorage.readOF()) {
-                        doJump(oper);
-                    }
-                }
-                case JL -> {
-                    final var oper = readOperand();
-                    if (regStorage.readCF() != regStorage.readOF()) {
-                        doJump(oper);
-                    }
-                }
-                case JLE -> {
-                    final var oper = readOperand();
-                    if (regStorage.readCF() != regStorage.readOF() && regStorage.readZF()) {
-                        doJump(oper);
-                    }
-                }
-            }
+            handleOpcode(curOpcode);
         }
 
         return statusCode;
+    }
+
+    private void handleOpcode(final Opcode curOpcode) {
+        switch (curOpcode) {
+            case REP -> {
+                int count = regStorage.readEcx();
+                final byte opcodeByte = readTextByte();
+                final var opcode = Opcode.fromByte(opcodeByte);
+                final Runnable fn = switch (opcode) {
+                    case MOVSB -> this::doMovSB;
+                    default -> throw new UnsupportedOperationException();
+                };
+                for (int i = 0; i < count; i++) {
+                    fn.run();
+                }
+            }
+            case MOVSB -> doMovSB();
+            case PUSHFQ -> {
+                pushByte(regStorage.readByte(RegStorage.cf));
+                pushByte(regStorage.readByte(RegStorage.of));
+                pushByte(regStorage.readByte(RegStorage.zf));
+                pushByte(regStorage.readByte(RegStorage.sf));
+            }
+            case POPFQ -> {
+                final byte sf = popByte();
+                final byte zf = popByte();
+                final byte of = popByte();
+                final byte cf = popByte();
+                regStorage.writeByte(RegStorage.sf, sf);
+                regStorage.writeByte(RegStorage.zf, zf);
+                regStorage.writeByte(RegStorage.of, of);
+                regStorage.writeByte(RegStorage.cf, cf);
+            }
+            case POPL -> {
+                final Operand operand = readOperand();
+                require(operand instanceof Register, "pushl operand must be register");
+                final int register = operand.value();
+                final int data = popInt();
+                regStorage.writeInt(register, data);
+            }
+            case PUSHL -> {
+                final Operand operand = readOperand();
+                require(operand instanceof Register
+                        || operand instanceof Number, "pushl operand must be register or number");
+                final int data = switch (operand) {
+                    case Register(int id) -> regStorage.readInt(id);
+                    case Number(int n) -> n;
+                    default -> throw new UnsupportedOperationException();
+                };
+                pushInt(data);
+            }
+            case LEAL -> {
+                final Operand first = readOperand();
+                final int source = switch (first) {
+                    case MemoryVar(int addr) -> addr;
+                    default -> throw new UnsupportedOperationException();
+                };
+                final Operand second = readOperand();
+                final int dest = switch (second) {
+                    case Register(int id) -> id;
+                    default -> throw new UnsupportedOperationException();
+                };
+
+                regStorage.writeInt(dest, source);
+            }
+            case SARL -> doSh((data, sh) -> data >> sh, sh -> 0x1 << Math.max(sh - 1, 0));
+            case SHRL -> doSh((data, sh) -> data >>> sh, sh -> 1 << Math.max(sh - 1, 0));
+            case SHLL -> doSh((data, sh) -> data << sh, sh -> 0x80_00_00_00 >>> Math.max(sh - 1, 0));
+            case NEGL -> doBitwise1(a -> a * -1);
+            case NOTL -> doBitwise1(a -> ~a);
+            case XORL -> doBitwise2((a, b) -> a ^ b);
+            case ORL -> doBitwise2((a, b) -> a | b);
+            case ANDL -> doBitwise2((a, b) -> a & b);
+            case CMOVNCL -> doMoveIf(() -> !regStorage.readCF());
+            case CMOVCL -> doMoveIf(regStorage::readCF);
+            case MOVL -> doMoveIf(() -> true);
+            case CMOVEL -> doMoveIf(regStorage::readZF);
+            case CMOVNEL -> doMoveIf(() -> !regStorage.readZF());
+            case SYSCALL -> {
+                final int syscallId = regStorage.readEax();
+                sysCallTable.executeOn(this, syscallId);
+            }
+            case NOP -> {
+                // skip
+            }
+            case ADDL -> {
+                final SingleTransfer t = prepareMathOpTransfer(Long::sum);
+                final int data = t.from().value();
+                final int register = t.to().value();
+                regStorage.writeInt(register, data);
+            }
+            case SUBL -> {
+                final SingleTransfer t = prepareMathOpTransfer((a, b) -> b - a);
+                final int data = t.from().value();
+                final int register = t.to().value();
+                regStorage.writeInt(register, data);
+            }
+            case INQL -> {
+                final SingleTransfer t = prepareIncrementTransfer(a -> a + 1);
+                final int data = t.from().value();
+                final int register = t.to().value();
+                regStorage.writeInt(register, data);
+            }
+            case DECL -> {
+                final SingleTransfer t = prepareIncrementTransfer(a -> a - 1);
+                final int data = t.from().value();
+                final int register = t.to().value();
+                regStorage.writeInt(register, data);
+            }
+            case MULL -> {
+                final Transfer t = prepareMullTransfer();
+                switch (t) {
+                    case SingleTransfer(Operand num, Operand eax) -> {
+                        final int data = num.value();
+                        final int id = eax.value();
+                        regStorage.writeInt(id, data);
+                        regStorage.writeInt(RegStorage.edx, 0);
+                    }
+                    case DoubleTransfer(SingleTransfer edx, SingleTransfer eax) -> {
+                        final int edxVal = edx.from().value();
+                        final int edxId = edx.to().value();
+                        regStorage.writeInt(edxId, edxVal);
+
+                        final int eaxVal = eax.from().value();
+                        final int eaxId = eax.to().value();
+                        regStorage.writeInt(eaxId, eaxVal);
+                    }
+                }
+            }
+            case LOOPL -> {
+                final Operand operand = readOperand();
+                regStorage.writeEcx(regStorage.readEcx() - 1);
+                if (regStorage.readEcx() != 0) {
+                    doJump(operand);
+                }
+            }
+            case JMP -> {
+                final Operand operand = readOperand();
+                doJump(operand);
+            }
+            case JC -> {
+                final Operand operand = readOperand();
+                if (regStorage.readCF()) {
+                    doJump(operand);
+                }
+            }
+            case JZ -> {
+                final Operand operand = readOperand();
+                if (regStorage.readZF()) {
+                    doJump(operand);
+                }
+            }
+            case JNZ -> {
+                final Operand operand = readOperand();
+                if (!regStorage.readZF()) {
+                    doJump(operand);
+                }
+            }
+            case CMPL -> {
+                final Operand op1 = readOperand();
+                final Operand op2 = readOperand();
+
+                final long val1 = switch (op1) {
+                    case Number(int num) -> num;
+                    case Register(int id) -> regStorage.readInt(id);
+                    default -> throw new UnsupportedOperationException();
+                };
+                final long val2 = switch (op2) {
+                    case Number(int num) -> num;
+                    case Register(int id) -> regStorage.readInt(id);
+                    default -> throw new UnsupportedOperationException();
+                };
+
+                final long diff = val2 - val1;
+                if (diff == 0) {
+                    regStorage.setZF();
+                } else {
+                    regStorage.clearOF();
+                }
+
+                if (diff < 0) {
+                    regStorage.setSF();
+                } else {
+                    regStorage.clearCF();
+                }
+
+                if (val2 < val1) {
+                    regStorage.setCF();
+                } else {
+                    regStorage.clearCF();
+                }
+
+                if (diff > Integer.MAX_VALUE || diff < Integer.MIN_VALUE) {
+                    regStorage.setOF();
+                } else {
+                    regStorage.clearOF();
+                }
+            }
+            case JE -> {
+                final var oper = readOperand();
+                if (regStorage.readZF()) {
+                    doJump(oper);
+                }
+            }
+            case JNE -> {
+                final var oper = readOperand();
+                if (!regStorage.readZF()) {
+                    doJump(oper);
+                }
+            }
+            case JG -> {
+                final var oper = readOperand();
+                if (regStorage.readCF() == regStorage.readOF() && !regStorage.readZF()) {
+                    doJump(oper);
+                }
+            }
+            case JGE -> {
+                final var oper = readOperand();
+                if (regStorage.readCF() == regStorage.readOF()) {
+                    doJump(oper);
+                }
+            }
+            case JL -> {
+                final var oper = readOperand();
+                if (regStorage.readCF() != regStorage.readOF()) {
+                    doJump(oper);
+                }
+            }
+            case JLE -> {
+                final var oper = readOperand();
+                if (regStorage.readCF() != regStorage.readOF() && regStorage.readZF()) {
+                    doJump(oper);
+                }
+            }
+        }
     }
 
     private void doJump(final Operand operand) {
@@ -335,6 +352,19 @@ public final class CPU {
             case MemoryAddr(int addr) -> memory.readTextInt(addr);
             default -> throw new UnsupportedOperationException();
         };
+    }
+
+    /*
+       movsb: извлекает байт по адресу ESI, сохраняет его по адресу EDI,
+       а затем увеличивает или уменьшает регистры RSI и RDI на 1.
+    */
+    private void doMovSB() {
+        final int addrSource = regStorage.readEsi();
+        final int addrDest = regStorage.readEdi();
+        final byte copy = memory.readByte(addrSource);
+        memory.writeByte(addrDest, copy);
+        regStorage.writeEsi(addrSource + 1);
+        regStorage.writeEdi(addrDest + 1);
     }
 
     private Transfer prepareMullTransfer() {
