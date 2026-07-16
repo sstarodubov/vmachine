@@ -100,6 +100,19 @@ public final class CPU {
 
     private void handleOpcode(final Opcode curOpcode) {
         switch (curOpcode) {
+            case RET -> {
+                final int retAddr = popInt();
+                regStorage.writeEip(retAddr);
+            }
+            case CALL -> {
+                final Operand operand = readOperand();
+                final int addr = switch (operand) {
+                    case MemoryAddr(int address) -> address;
+                    default -> throw new UnsupportedOperationException();
+                };
+                pushInt(regStorage.readEip());
+                regStorage.writeEip(addr);
+            }
             case REP -> {
                 int count = regStorage.readEcx();
                 final byte opcodeByte = readTextByte();

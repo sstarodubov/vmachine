@@ -1570,7 +1570,6 @@ class AsmTest {
         final var cpu = new CPU();
 
         cpu.run(code);
-        System.out.println(cpu.regStorage.readEdi());
         int addr = cpu.regStorage.readEdx();
         var sb = new StringBuilder();
         for (int i = 0; i < 11; i++) {
@@ -1578,5 +1577,35 @@ class AsmTest {
         }
 
         assertEquals("hello world", sb.toString());
+    }
+
+    @Test
+    void test68() {
+        final var program = """
+                .globl _start
+                .text
+                _start:
+                    call sum    # вызываем функцию sum
+                    jmp exit
+                    
+                # определяем функцию sum
+                sum:
+                    movl $7, %edi
+                    movl $5, %esi
+                    addl %esi, %edi
+                    ret
+                    
+                exit:
+                    movl $60, %eax
+                    syscall  
+               """;
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+
+        cpu.run(code);
+
+        assertEquals(12, cpu.statusCode);
+        assertEquals(5, cpu.regStorage.readEsi());
     }
 }
