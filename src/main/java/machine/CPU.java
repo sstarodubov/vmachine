@@ -24,7 +24,8 @@ public final class CPU {
         this.regStorage = new RegStorage();
     }
 
-    public int statusCode = 0;
+    public int exitCode = 0;
+    public boolean exit = false;
 
     public int readStackInt(final int offset) {
         return memory.readInt(regStorage.readEsp() + offset);
@@ -88,14 +89,14 @@ public final class CPU {
          */
         Opcode curOpcode;
         byte curByte;
-        while (regStorage.readEip() < memory.textSegmentSize()) {
+        while (regStorage.readEip() < memory.textSegmentSize() && !exit) {
             curByte = readTextByte();
             curOpcode = Opcode.fromByte(curByte);
             require(curOpcode != null, "unknown opcode: %d".formatted(curByte));
             handleOpcode(curOpcode);
         }
 
-        return statusCode;
+        return exitCode;
     }
 
     private void handleOpcode(final Opcode curOpcode) {
@@ -144,18 +145,24 @@ public final class CPU {
             }
             case POPL -> {
                 final Operand operand = readOperand();
-                require(operand instanceof Register, "pushl operand must be register");
-                final int register = operand.value();
+                require(operand instanceof Register || operand instanceof MemoryVar,
+                        "popl operand must be register or memory var");
                 final int data = popInt();
-                regStorage.writeInt(register, data);
+                switch (operand) {
+                    case Register(int id) -> regStorage.writeInt(id, data);
+                    case MemoryVar(int addr) -> memory.writeInt(addr, data);
+                    default -> throw new UnsupportedOperationException();
+                }
             }
             case PUSHL -> {
                 final Operand operand = readOperand();
                 require(operand instanceof Register
-                        || operand instanceof Number, "pushl operand must be register or number");
+                        || operand instanceof Number || operand instanceof MemoryVar,
+                        "pushl operand must be register or number or memoryVar");
                 final int data = switch (operand) {
                     case Register(int id) -> regStorage.readInt(id);
                     case Number(int n) -> n;
+                    case MemoryVar(int addr) -> memory.readInt(addr);
                     default -> throw new UnsupportedOperationException();
                 };
                 pushInt(data);

@@ -271,7 +271,7 @@ class AsmTest {
         final var cpu = new CPU();
         final int status = cpu.run(code);
 
-        assertEquals(11, cpu.statusCode);
+        assertEquals(11, cpu.exitCode);
     }
 
     @Test
@@ -294,7 +294,7 @@ class AsmTest {
         final var cpu = new CPU();
         final int status = cpu.run(code);
 
-        assertEquals(11, cpu.statusCode);
+        assertEquals(11, cpu.exitCode);
     }
 
     @Test
@@ -320,7 +320,7 @@ class AsmTest {
         final var cpu = new CPU();
         final int status = cpu.run(code);
 
-        assertEquals(1, cpu.statusCode);
+        assertEquals(1, cpu.exitCode);
     }
 
     @Test
@@ -346,7 +346,7 @@ class AsmTest {
         final var cpu = new CPU();
         final int status = cpu.run(code);
 
-        assertEquals(100, cpu.statusCode);
+        assertEquals(100, cpu.exitCode);
     }
 
 
@@ -373,7 +373,7 @@ class AsmTest {
         final var cpu = new CPU();
         final int status = cpu.run(code);
 
-        assertEquals(4, cpu.statusCode);
+        assertEquals(4, cpu.exitCode);
     }
 
 
@@ -400,7 +400,7 @@ class AsmTest {
         final var cpu = new CPU();
         final int status = cpu.run(code);
 
-        assertEquals(2, cpu.statusCode);
+        assertEquals(2, cpu.exitCode);
     }
 
 
@@ -425,7 +425,7 @@ class AsmTest {
         final var cpu = new CPU();
         final int status = cpu.run(code);
 
-        assertEquals(10, cpu.statusCode);
+        assertEquals(10, cpu.exitCode);
     }
 
 
@@ -452,7 +452,7 @@ class AsmTest {
         final var cpu = new CPU();
         final int status = cpu.run(code);
 
-        assertEquals(4, cpu.statusCode);
+        assertEquals(4, cpu.exitCode);
     }
 
     @Test
@@ -478,7 +478,7 @@ class AsmTest {
         final var cpu = new CPU();
         final int status = cpu.run(code);
 
-        assertEquals(2, cpu.statusCode);
+        assertEquals(2, cpu.exitCode);
     }
 
 
@@ -506,7 +506,7 @@ class AsmTest {
         final var cpu = new CPU();
         final int status = cpu.run(code);
 
-        assertEquals(4, cpu.statusCode);
+        assertEquals(4, cpu.exitCode);
     }
 
     @Test
@@ -533,7 +533,7 @@ class AsmTest {
         final var cpu = new CPU();
         final int status = cpu.run(code);
 
-        assertEquals(2, cpu.statusCode);
+        assertEquals(2, cpu.exitCode);
     }
 
     @Test
@@ -560,7 +560,7 @@ class AsmTest {
         final var cpu = new CPU();
         final int status = cpu.run(code);
 
-        assertEquals(16, cpu.statusCode);
+        assertEquals(16, cpu.exitCode);
     }
 
 
@@ -588,7 +588,7 @@ class AsmTest {
         final var cpu = new CPU();
         final int status = cpu.run(code);
 
-        assertEquals(8, cpu.statusCode);
+        assertEquals(8, cpu.exitCode);
     }
 
 
@@ -612,7 +612,7 @@ class AsmTest {
         final var cpu = new CPU();
         final int status = cpu.run(code);
 
-        assertEquals(10, cpu.statusCode);
+        assertEquals(10, cpu.exitCode);
     }
 
 
@@ -635,7 +635,7 @@ class AsmTest {
         final var cpu = new CPU();
         final int status = cpu.run(code);
 
-        assertEquals(4, cpu.statusCode);
+        assertEquals(4, cpu.exitCode);
     }
 
 
@@ -657,7 +657,7 @@ class AsmTest {
         final var cpu = new CPU();
         final int status = cpu.run(code);
 
-        assertEquals(14, cpu.statusCode);
+        assertEquals(14, cpu.exitCode);
     }
 
 
@@ -680,7 +680,7 @@ class AsmTest {
         final var cpu = new CPU();
         final int status = cpu.run(code);
 
-        assertEquals(10, cpu.statusCode);
+        assertEquals(10, cpu.exitCode);
     }
 
 
@@ -704,7 +704,7 @@ class AsmTest {
         final var cpu = new CPU();
         final int status = cpu.run(code);
 
-        assertEquals(-13, cpu.statusCode);
+        assertEquals(-13, cpu.exitCode);
     }
 
 
@@ -727,7 +727,7 @@ class AsmTest {
         final var cpu = new CPU();
         final int status = cpu.run(code);
 
-        assertEquals(12, cpu.statusCode);
+        assertEquals(12, cpu.exitCode);
     }
 
 
@@ -749,7 +749,7 @@ class AsmTest {
         final var cpu = new CPU();
         final int status = cpu.run(code);
 
-        assertEquals(10, cpu.statusCode);
+        assertEquals(10, cpu.exitCode);
     }
 
     @Test
@@ -775,7 +775,7 @@ class AsmTest {
         final var cpu = new CPU();
         final int status = cpu.run(code);
 
-        assertEquals(1, cpu.statusCode);
+        assertEquals(1, cpu.exitCode);
     }
 
     @Test
@@ -796,7 +796,7 @@ class AsmTest {
         final var cpu = new CPU();
         final int status = cpu.run(code);
 
-        assertEquals(17, cpu.statusCode);
+        assertEquals(17, cpu.exitCode);
     }
 
     @Test
@@ -817,7 +817,7 @@ class AsmTest {
         final var cpu = new CPU();
         final int status = cpu.run(code);
 
-        assertEquals(-2, cpu.statusCode);
+        assertEquals(-2, cpu.exitCode);
     }
 
     @Test
@@ -839,7 +839,7 @@ class AsmTest {
         final var cpu = new CPU();
         cpu.run(code);
 
-        assertEquals(123, cpu.statusCode);
+        assertEquals(123, cpu.exitCode);
     }
 
     @Test
@@ -863,7 +863,7 @@ class AsmTest {
         final var cpu = new CPU();
         final int status = cpu.run(code);
 
-        assertEquals(67, cpu.statusCode);
+        assertEquals(67, cpu.exitCode);
     }
 
     @Test
@@ -884,7 +884,7 @@ class AsmTest {
         final var cpu = new CPU();
         final int status = cpu.run(code);
 
-        assertEquals(15, cpu.statusCode);
+        assertEquals(15, cpu.exitCode);
     }
 
     @Test
@@ -905,7 +905,7 @@ class AsmTest {
         final var cpu = new CPU();
         final int status = cpu.run(code);
 
-        assertEquals(5, cpu.statusCode);
+        assertEquals(5, cpu.exitCode);
     }
 
     @Test
@@ -928,7 +928,7 @@ class AsmTest {
         final var cpu = new CPU();
         final int status = cpu.run(code);
 
-        assertEquals(5, cpu.statusCode);
+        assertEquals(5, cpu.exitCode);
     }
 
     @Test
@@ -951,7 +951,7 @@ class AsmTest {
         final var cpu = new CPU();
         cpu.run(code);
 
-        assertEquals(100, cpu.statusCode);
+        assertEquals(100, cpu.exitCode);
     }
 
     @Test
@@ -975,7 +975,7 @@ class AsmTest {
         final var cpu = new CPU();
         cpu.run(code);
 
-        assertEquals(13, cpu.statusCode);
+        assertEquals(13, cpu.exitCode);
     }
 
     @Test
@@ -1001,7 +1001,7 @@ class AsmTest {
         final var cpu = new CPU();
         cpu.run(code);
 
-        assertEquals(5, cpu.statusCode);
+        assertEquals(5, cpu.exitCode);
     }
 
     @Test
@@ -1029,7 +1029,7 @@ class AsmTest {
         final var cpu = new CPU();
         cpu.run(code);
 
-        assertEquals(15, cpu.statusCode);
+        assertEquals(15, cpu.exitCode);
     }
 
     @Test
@@ -1053,7 +1053,7 @@ class AsmTest {
         final var cpu = new CPU();
         cpu.run(code);
 
-        assertEquals(13, cpu.statusCode);
+        assertEquals(13, cpu.exitCode);
     }
 
     @Test
@@ -1077,7 +1077,7 @@ class AsmTest {
         final var cpu = new CPU();
         cpu.run(code);
 
-        assertEquals(113, cpu.statusCode);
+        assertEquals(113, cpu.exitCode);
     }
 
     @Test
@@ -1100,7 +1100,7 @@ class AsmTest {
         final var cpu = new CPU();
         cpu.run(code);
 
-        assertEquals(13, cpu.statusCode);
+        assertEquals(13, cpu.exitCode);
     }
 
     @Test
@@ -1123,7 +1123,7 @@ class AsmTest {
         final var cpu = new CPU();
         cpu.run(code);
 
-        assertEquals(24, cpu.statusCode);
+        assertEquals(24, cpu.exitCode);
     }
 
     @Test
@@ -1147,7 +1147,7 @@ class AsmTest {
         final var cpu = new CPU();
         cpu.run(code);
 
-        assertEquals(45, cpu.statusCode);
+        assertEquals(45, cpu.exitCode);
     }
 
     @Test
@@ -1166,7 +1166,7 @@ class AsmTest {
         final var cpu = new CPU();
         cpu.run(code);
 
-        assertEquals(65, cpu.statusCode);
+        assertEquals(65, cpu.exitCode);
     }
 
     @Test
@@ -1188,7 +1188,7 @@ class AsmTest {
         final var cpu = new CPU();
         cpu.run(code);
 
-        assertEquals(68, cpu.statusCode);
+        assertEquals(68, cpu.exitCode);
     }
 
     @Test
@@ -1244,7 +1244,7 @@ class AsmTest {
         final var cpu = new CPU();
         cpu.run(code);
 
-        assertEquals(6, cpu.statusCode);
+        assertEquals(6, cpu.exitCode);
     }
 
 
@@ -1272,7 +1272,7 @@ class AsmTest {
         final var cpu = new CPU();
         cpu.run(code);
 
-        assertEquals(7, cpu.statusCode);
+        assertEquals(7, cpu.exitCode);
     }
 
 
@@ -1309,7 +1309,7 @@ class AsmTest {
             final ByteBuffer code = asm.compile();
             final var cpu = new CPU();
             cpu.run(code);
-            assertEquals(34, cpu.statusCode);
+            assertEquals(34, cpu.exitCode);
             assertEquals("Alice\n", out.toString());
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -1362,7 +1362,7 @@ class AsmTest {
             final var cpu = new CPU();
             cpu.run(code);
 
-            assertEquals(34, cpu.statusCode);
+            assertEquals(34, cpu.exitCode);
             assertEquals("Alice\n", out.toString());
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -1388,7 +1388,7 @@ class AsmTest {
             final var cpu = new CPU();
             cpu.run(code);
 
-            assertEquals(15, cpu.statusCode);
+            assertEquals(15, cpu.exitCode);
     }
     @Test
     void test61() {
@@ -1413,7 +1413,7 @@ class AsmTest {
         final var cpu = new CPU();
         cpu.run(code);
 
-        assertEquals(2, cpu.statusCode);
+        assertEquals(2, cpu.exitCode);
     }
 
     @Test
@@ -1491,7 +1491,7 @@ class AsmTest {
 
         cpu.run(code);
         assertEquals(11, cpu.readStackInt(-8));
-        assertEquals(11, cpu.statusCode);
+        assertEquals(11, cpu.exitCode);
     }
 
     @Test
@@ -1517,7 +1517,7 @@ class AsmTest {
         final var cpu = new CPU();
 
         cpu.run(code);
-        assertEquals(13, cpu.statusCode);
+        assertEquals(13, cpu.exitCode);
     }
 
     @Test
@@ -1546,7 +1546,7 @@ class AsmTest {
         final var cpu = new CPU();
 
         cpu.run(code);
-        assertEquals(25, cpu.statusCode);
+        assertEquals(25, cpu.exitCode);
     }
 
     @Test
@@ -1605,7 +1605,40 @@ class AsmTest {
 
         cpu.run(code);
 
-        assertEquals(12, cpu.statusCode);
+        assertEquals(12, cpu.exitCode);
         assertEquals(5, cpu.regStorage.readEsi());
+    }
+
+    @Test
+    void test69() {
+        final var program = """
+                .globl _start
+
+               .data
+                   num: .long 45
+               .text
+               _start:
+                   call sum
+                   movl %eax, %edi     # RDI = RAX = 25
+                   addl num, %edi     # RDI = RDI + num = 25 + 45 = 70
+
+                   movl $60, %eax
+                   syscall
+
+               sum:
+                   pushl num        # сохраняем значение num в стек
+                   movl $15, num
+                   movl $10, %eax
+                   addl num, %eax     # RAX = RAX + num = 10 + 15 = 25
+                   popl num         # восстанавливаем num из стека
+                   ret 
+               """;
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+
+        cpu.run(code);
+
+        assertEquals(70, cpu.exitCode);
     }
 }

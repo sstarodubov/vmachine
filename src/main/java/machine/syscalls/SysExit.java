@@ -6,7 +6,8 @@ public class SysExit implements SysCall {
 
     @Override
     public void execute(final CPU cpu) {
-        cpu.statusCode = cpu.regStorage.readEdi();
+        cpu.exitCode = cpu.regStorage.readEdi();
+        cpu.exit = true;
     }
 
     @Override
