@@ -1641,4 +1641,42 @@ class AsmTest {
 
         assertEquals(70, cpu.exitCode);
     }
+
+
+
+    @Test
+    void test70() {
+        final var program = """
+               .globl _start
+               .equ _a, -4
+               .equ _b, -8
+               .text
+               _start:
+                   movl $11, %edi      # в RDI параметр для функции sum
+                   call sum            # после вызова в RAX - результат сложения
+                   movl %eax, %edi     # помещаем результат в RDI
+
+                   movl $60, %eax      # RDI = 16
+                   syscall
+
+               sum:
+                   enter $16, $0       # сохраняем значения RSP и RBP и выделяем в стеке 16 байт
+
+                   movl $8, _a(%ebp)       # По адресу -4(%rbp) первая локальная переменная, равная 8
+                   movl %edi, _b(%ebp)    # По адресу -8(%rbp) вторая локальная переменная, равная RDI
+
+                   movl _a(%ebp), %eax     # в RAX значение из -8(%rbp)  - первая локальная переменная
+                   addl _b(%ebp), %eax    # RAX = RAX + -16(%rbp) - вторая локальная переменная
+
+                   leave       # восстанавливаем ранее сохраненное значение RSP и RBP
+                   ret
+               """;
+        final var asm = new Asm(program);
+        final ByteBuffer code = asm.compile();
+        final var cpu = new CPU();
+
+        cpu.run(code);
+
+        assertEquals(19, cpu.exitCode);
+    }
 }

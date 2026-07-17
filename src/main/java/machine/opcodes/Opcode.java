@@ -47,7 +47,9 @@ public enum Opcode {
     REP((byte) 37, "rep"),
     MOVSB((byte) 38,  "movsb"),
     RET((byte) 39, "ret"),
-    CALL((byte) 40, "call")
+    CALL((byte) 40, "call"),
+    ENTER((byte) 41, "enter"),
+    LEAVE((byte) 42, "leave")
     ;
 
     public final byte code;

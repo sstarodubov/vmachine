@@ -101,6 +101,33 @@ public final class CPU {
 
     private void handleOpcode(final Opcode curOpcode) {
         switch (curOpcode) {
+            case ENTER -> {
+                final Operand f = readOperand();
+                final Operand s = readOperand();
+                require(s.value() == 0 && s instanceof Number, "second must be 0");
+                final int n  = switch (f) {
+                    case Number(int val) -> val;
+                    default -> throw new UnsupportedOperationException();
+                };
+                /*
+                pushq %rbp
+                movq %rsp, %rbp
+                subq $N_байтов, %rsp
+                 */
+                final int rbpOld = regStorage.readEbp();
+                pushInt(rbpOld);
+                final int esp = regStorage.readEsp();
+                regStorage.writeEbp(esp);
+                regStorage.writeEsp(regStorage.readEsp() - n);
+            }
+            case LEAVE -> {
+                //movq %rbp, %rsp
+                //popq %rbp
+                final int ebp = regStorage.readEbp();
+                regStorage.writeEsp(ebp);
+                final int top = popInt();
+                regStorage.writeEbp(top);
+            }
             case RET -> {
                 final int retAddr = popInt();
                 regStorage.writeEip(retAddr);

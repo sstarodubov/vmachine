@@ -297,8 +297,9 @@ public final class Asm {
         consume(TokenType.COMMA);
 
         final Operand second = compileOperands1();
-        require(second instanceof Register || second instanceof VarOperand || second instanceof IndirectAddr,
-                "second operator must be register or variable or indirect");
+        require(second instanceof Register || second instanceof VarOperand || second instanceof IndirectAddr
+                        || second instanceof Number ,
+                "second operator must be register or variable or indirect or number");
     }
 
 
@@ -311,6 +312,11 @@ public final class Asm {
 
         //opcodes
         switch (Opcode.fromString(curToken.lexeme())) {
+            case LEAVE -> {
+                appendToCodeBuff(Opcode.LEAVE.code, 1);
+                consume(TokenType.STRING);
+            }
+            case ENTER -> appendOpcode(Opcode.ENTER, 2);
             case CALL -> appendOpcode(Opcode.CALL, 1);
             case RET -> {
                 appendToCodeBuff(Opcode.RET.code, 1);
