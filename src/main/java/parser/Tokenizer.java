@@ -11,7 +11,8 @@ public class Tokenizer {
             new Rule(Pattern.compile("(^\"[^\"]*\")|(^'[^']*')"), TokenType.String), // strings
             new Rule(Pattern.compile("^\\d+"), TokenType.Number), // number
             new Rule(Pattern.compile("^\\/\\*[\\s\\S]*?\\*\\/"), null), //   /**/comments
-            new Rule(Pattern.compile("^\\/\\/.*"), null) // //comments
+            new Rule(Pattern.compile("^\\/\\/.*"), null), // //comments
+            new Rule(Pattern.compile("^;"), TokenType.Semicolon ) // semicolon
     };
 
     int cursor = 0;
