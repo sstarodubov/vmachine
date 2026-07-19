@@ -1,7 +1,18 @@
 package parser;
 
-public class Tokenizer {
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+public class Tokenizer {
+    record Rule(Pattern regexp, TokenType type) {}
+
+    final Rule[] patternRules  = new Rule[] {
+            new Rule(Pattern.compile("^\\s+"),null), // white spaces
+            new Rule(Pattern.compile("(^\"[^\"]*\")|(^'[^']*')"), TokenType.String), // strings
+            new Rule(Pattern.compile("^\\d+"), TokenType.Number), // number
+            new Rule(Pattern.compile("^\\/\\*[\\s\\S]*?\\*\\/"), null), //   /**/comments
+            new Rule(Pattern.compile("^\\/\\/.*"), null) // //comments
+    };
 
     int cursor = 0;
     final String _string;
@@ -12,12 +23,6 @@ public class Tokenizer {
 
     boolean hasMoreTokens() {
         return cursor < _string.length();
-    }
-
-    void skipWhiteSpaces() {
-        while (hasMoreTokens() && Character.isWhitespace(_string.charAt(cursor))) {
-            cursor++;
-        }
     }
 
     Token extractString(final char qType) {
@@ -33,23 +38,22 @@ public class Tokenizer {
     }
 
     public Token getNextToken() {
-        skipWhiteSpaces();
         if (!hasMoreTokens()) {
             return new Token(TokenType.EOF, "");
         }
-
-        return switch (_string.charAt(cursor)) {
-            case char q when q == '"' || q == '\'' -> extractString(q);
-            case char digit when Character.isDigit(digit) -> {
-                final var sb = new StringBuilder();
-                while (hasMoreTokens() && Character.isDigit(_string.charAt(cursor))) {
-                    sb.append(_string.charAt(cursor));
-                    cursor++;
+        final var string = _string.substring(cursor);
+        for (Rule rule : patternRules) {
+            final Matcher matcher = rule.regexp().matcher(string);
+            if (matcher.find()) {
+                final var found = matcher.group();
+                cursor += found.length();
+                if (rule.type() == null) {
+                    return getNextToken();
                 }
-                yield new Token(TokenType.Number, sb.toString());
+                return new Token(rule.type(), found);
             }
+        }
 
-            default -> throw new UnsupportedOperationException();
-        };
+        throw new UnsupportedOperationException("unsupported token");
     }
 }

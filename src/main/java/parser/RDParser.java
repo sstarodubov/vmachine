@@ -62,7 +62,7 @@ public final class RDParser {
      */
     AstNode stringLiteral() {
         final var token = eat(TokenType.String);
-        return new StringLiteralNode(token.value());
+        return new StringLiteralNode(token.value().substring(1, token.value().length() - 1));
     }
 
     /*
