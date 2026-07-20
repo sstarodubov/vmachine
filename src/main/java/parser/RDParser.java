@@ -38,15 +38,44 @@ public final class RDParser {
         ;
      */
     AstNode buildProgram() {
-        return new Program(buildStatementList());
+        return new Program(buildStatementList(TokenType.EOF));
     }
     /*
       statement
       : expressionStatement
+      | blockStatement
+      | emptyStatement
       ;
      */
     AstNode buildStatement() {
-        return buildExpressionStatement();
+        return switch (lookahead.type()) {
+            case TokenType.OpenedCurlyBrace -> buildBlockStatement();
+            case TokenType.Semicolon -> buildEmptyStatement();
+            default -> buildExpressionStatement();
+        };
+    }
+
+    /*
+        emptyStatement
+        : ';'
+        ;
+     */
+    AstNode buildEmptyStatement() {
+        eat(TokenType.Semicolon);
+        return new EmptyStatement();
+    }
+    /*
+        blockStatement
+        : '{' statementList '}'
+        ;
+     */
+    AstNode buildBlockStatement() {
+        eat(TokenType.OpenedCurlyBrace);
+        final AstNode expStatement = lookahead.type() != TokenType.ClosedCurlyBrace
+                ? buildStatementList(TokenType.ClosedCurlyBrace)
+                : new StatementList(Collections.emptyList());
+        eat(TokenType.ClosedCurlyBrace);
+        return new BlockStatement(expStatement);
     }
 
     /*
@@ -55,10 +84,10 @@ public final class RDParser {
         |  statementList statement -> statement, statement, ...
         ;
      */
-    AstNode buildStatementList() {
+    AstNode buildStatementList(final TokenType stopLookahead) {
         final var statementList = new ArrayList<AstNode>();
         statementList.add(buildStatement());
-        while (lookahead.type() != TokenType.EOF) {
+        while (lookahead.type() != TokenType.EOF && lookahead.type() != stopLookahead) {
             statementList.add(buildStatement());
         }
         return new StatementList(Collections.unmodifiableList(statementList));

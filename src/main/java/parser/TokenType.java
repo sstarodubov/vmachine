@@ -1,5 +1,5 @@
 package parser;
 
 public enum TokenType {
-    Number, EOF, String, Semicolon
+    Number, EOF, String, Semicolon, OpenedCurlyBrace, ClosedCurlyBrace
 }

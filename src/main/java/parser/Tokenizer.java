@@ -10,9 +10,11 @@ public class Tokenizer {
             new Rule(Pattern.compile("^\\s+"),null), // white spaces
             new Rule(Pattern.compile("(^\"[^\"]*\")|(^'[^']*')"), TokenType.String), // strings
             new Rule(Pattern.compile("^\\d+"), TokenType.Number), // number
-            new Rule(Pattern.compile("^\\/\\*[\\s\\S]*?\\*\\/"), null), //   /**/comments
-            new Rule(Pattern.compile("^\\/\\/.*"), null), // //comments
-            new Rule(Pattern.compile("^;"), TokenType.Semicolon ) // semicolon
+            new Rule(Pattern.compile("^/\\*[\\s\\S]*?\\*/"), null), //   /**/comments
+            new Rule(Pattern.compile("^//.*"), null), // //comments
+            new Rule(Pattern.compile("^;"), TokenType.Semicolon ), // semicolon
+            new Rule(Pattern.compile("^\\{"), TokenType.OpenedCurlyBrace),
+            new Rule(Pattern.compile("^}"), TokenType.ClosedCurlyBrace)
     };
 
     int cursor = 0;
