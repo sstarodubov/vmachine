@@ -14,7 +14,11 @@ public class Tokenizer {
             new Rule(Pattern.compile("^//.*"), null), // //comments
             new Rule(Pattern.compile("^;"), TokenType.Semicolon ), // semicolon
             new Rule(Pattern.compile("^\\{"), TokenType.OpenedCurlyBrace),
-            new Rule(Pattern.compile("^}"), TokenType.ClosedCurlyBrace)
+            new Rule(Pattern.compile("^}"), TokenType.ClosedCurlyBrace),
+            new Rule(Pattern.compile("^[+\\-]"), TokenType.AdditiveOperator),
+            new Rule(Pattern.compile("^[*/]"), TokenType.MultiplicativeOperator),
+            new Rule(Pattern.compile("^\\("), TokenType.OpenParenthesis),
+            new Rule(Pattern.compile("^\\)"), TokenType.CloseParenthesis),
     };
 
     int cursor = 0;

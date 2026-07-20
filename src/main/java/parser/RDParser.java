@@ -4,6 +4,7 @@ import parser.node.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.function.Supplier;
 
 /*
     курс по парсингу
@@ -103,14 +104,69 @@ public final class RDParser {
         eat(TokenType.Semicolon);
         return new ExpressionStatement(expression);
     }
+    /*
+        additiveExpression
+        : multiplicativeExpression
+        | additiveExpression ADDITIVE_OPERATOR multiplicativeExpression
+        ;
+     */
+    AstNode buildAdditiveExpression() {
+        return genericBinaryExpression(this::buildMultiplicativeExpression, TokenType.AdditiveOperator);
+    }
+
+     /*
+        multiplicativeExpression
+        : primaryExpression
+        | multiplicativeExpression MULTIPLICATIVE_OPERATOR primaryExpression
+        ;
+     */
+    AstNode buildMultiplicativeExpression() {
+        return genericBinaryExpression(this::buildPrimaryExpression, TokenType.MultiplicativeOperator);
+    }
+    private AstNode genericBinaryExpression(final Supplier<AstNode> mathOp, final TokenType type) {
+        var left = mathOp.get();
+        while (lookahead.type() == type) {
+            final var operator = eat(type);
+            final var right = mathOp.get();
+
+            left = new BinaryExpression(operator.value(), left, right);
+        }
+
+        return left;
+    }
+
+    /*
+       primaryExpression
+       : literal
+       | parenthesizedExpression
+       ;
+     */
+    AstNode buildPrimaryExpression() {
+        return switch (lookahead.type()) {
+            case OpenParenthesis -> parenthesizedExpression();
+            default -> buildLiteral();
+        };
+    }
+
+    /*
+        parenthesizedExpression
+        : ( expression )
+        ;
+     */
+    AstNode parenthesizedExpression() {
+        eat(TokenType.OpenParenthesis);
+        final var exp = buildExpression();
+        eat(TokenType.CloseParenthesis);
+        return exp;
+    }
 
     /*
         expression
-        : literal
+        : additiveExpression
         ;
      */
     AstNode buildExpression() {
-        return buildLiteral();
+        return buildAdditiveExpression();
     }
     /*
        literal

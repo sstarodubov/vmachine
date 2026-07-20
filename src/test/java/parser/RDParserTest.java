@@ -7,6 +7,19 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class RDParserTest {
 
+    // skip whitespaces
+    String sw(String s) {
+        var sb = new StringBuilder();
+        for (int i = 0; i < s.length(); i++) {
+            if (Character.isWhitespace(s.charAt(i))) {
+                continue;
+            }
+            sb.append(s.charAt(i));
+        }
+
+        return sb.toString();
+    }
+
     @Test
     void test1() {
         final var p = new RDParser();
@@ -171,5 +184,95 @@ class RDParserTest {
                 .as(StatementList.class).statements().getFirst()
                 .as(EmptyStatement.class);
         assertNotNull(emptyStatement);
+    }
+
+    @Test
+    void test12() {
+        final var p = new RDParser();
+        final Program ast = (Program) p.parse("""
+                    1+3;
+                """);
+        var binExp = ast.body()
+                .as(StatementList.class).statements().getFirst()
+                .as(ExpressionStatement.class).expression()
+                .as(BinaryExpression.class);
+        assertEquals(1, binExp.left().as(NumericLiteral.class).value());
+        assertEquals(3, binExp.right().as(NumericLiteral.class).value());
+        assertEquals("+", binExp.operator());
+    }
+
+    @Test
+    void test13() {
+        final var p = new RDParser();
+        final Program ast = (Program) p.parse("""
+                    1-2+3;
+                """);
+        var binExp = ast.body()
+                .as(StatementList.class).statements().getFirst()
+                .as(ExpressionStatement.class).expression()
+                .as(BinaryExpression.class);
+        assertEquals(1, binExp.left().as(BinaryExpression.class).left().as(NumericLiteral.class).value());
+        assertEquals("-", binExp.left().as(BinaryExpression.class).operator());
+        assertEquals(2, binExp.left().as(BinaryExpression.class).right().as(NumericLiteral.class).value());
+        assertEquals(3, binExp.right().as(NumericLiteral.class).value());
+        assertEquals("+", binExp.operator());
+    }
+
+
+    @Test
+    void test14() {
+        final var p = new RDParser();
+        final Program ast = (Program) p.parse("""
+                    1 + 2 * 3;
+                """);
+        var binExp = ast.body()
+                .as(StatementList.class).statements().getFirst()
+                .as(ExpressionStatement.class).expression()
+                .as(BinaryExpression.class);
+
+        assertEquals(1, binExp.left().as(NumericLiteral.class).value());
+        assertEquals("+", binExp.operator());
+
+        assertEquals(2, binExp.right().as(BinaryExpression.class).left().as(NumericLiteral.class).value());
+        assertEquals("*", binExp.right().as(BinaryExpression.class).operator());
+        assertEquals(3, binExp.right().as(BinaryExpression.class).right().as(NumericLiteral.class).value());
+    }
+
+
+    @Test
+    void test15() {
+        final var p = new RDParser();
+        final Program ast = (Program) p.parse("""
+                    (1 + 2) * 3;
+                """);
+        var binExp = ast.body()
+                .as(StatementList.class).statements().getFirst()
+                .as(ExpressionStatement.class).expression()
+                .as(BinaryExpression.class);
+        assertEquals(sw("""
+                    BinaryExpression[
+                                    operator=*,
+                                    left=BinaryExpression[
+                                                          operator=+,
+                                                          left=NumericLiteral[value=1],
+                                                          right=NumericLiteral[value=2]
+                                                          ],
+                                    right=NumericLiteral[value=3]
+                                    ]"""),
+                sw(binExp.toString()));
+    }
+
+
+    @Test
+    void test16() {
+        final var p = new RDParser();
+        final Program ast = (Program) p.parse("""
+                    (1);
+                """);
+        var value = ast.body()
+                .as(StatementList.class).statements().getFirst()
+                .as(ExpressionStatement.class).expression()
+                .as(NumericLiteral.class).value();
+        assertEquals(1, value);
     }
 }
