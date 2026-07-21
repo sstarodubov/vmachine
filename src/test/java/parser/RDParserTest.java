@@ -321,7 +321,6 @@ class RDParserTest {
         final var assignment =ast.body().as(StatementList.class).statements().getFirst()
                 .as(ExpressionStatement.class).expression()
                 .as(AssignmentExpression.class);
-        System.out.println(assignment);
         assertEquals(sw("""
                 AssignmentExpression[operator==,
                                      left=Identifier[value=x],
@@ -332,5 +331,64 @@ class RDParserTest {
                                                         ]
                                      ]
                 """), sw(assignment.toString()));
+    }
+
+    @Test
+    void test20() {
+        final var p = new RDParser();
+        final Program ast = (Program) p.parse("""
+                  let x = b = 100; 
+                """);
+        final var result =ast.body().as(StatementList.class).statements().getFirst()
+                .as(VariableStatement.class);
+        assertEquals(sw("""
+                VariableStatement[
+                        declarations=[
+                                        VariableDeclaration[
+                                                               id=Identifier[value=x],
+                                                               init=AssignmentExpression[operator==,
+                                                                                         left=Identifier[value=b], 
+                                                                                         right=NumericLiteral[value=100]
+                                                                                         ]
+                                                           ]
+                                     ]
+                                 ]
+                
+                """), sw(result.toString()));
+    }
+
+    @Test
+    void test21() {
+        final var p = new RDParser();
+        final Program ast = (Program) p.parse("""
+                  let x;
+                """);
+        final var result =ast.body().as(StatementList.class).statements().getFirst()
+                .as(VariableStatement.class);
+        assertEquals(sw("""
+              VariableStatement[
+                                declarations=[
+                                            VariableDeclaration[id=Identifier[value=x], init=null]
+                                            ]
+                               ]
+                """), sw(result.toString()));
+    }
+
+
+    @Test
+    void test22() {
+        final var p = new RDParser();
+        final Program ast = (Program) p.parse("""
+                  let x = 100;
+                """);
+        final var result =ast.body().as(StatementList.class).statements().getFirst()
+                .as(VariableStatement.class);
+        assertEquals(sw("""
+           VariableStatement[
+                            declarations=[
+                                    VariableDeclaration[id=Identifier[value=x], init=NumericLiteral[value=100]]
+                                    ]
+                            ]
+                """), sw(result.toString()));
     }
 }

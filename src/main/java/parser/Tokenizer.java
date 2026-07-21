@@ -7,6 +7,7 @@ public class Tokenizer {
     record Rule(Pattern regexp, TokenType type) {}
 
     final Rule[] patternRules  = new Rule[] {
+            new Rule(Pattern.compile("^\\blet\\b"), TokenType.Let),
             new Rule(Pattern.compile("^\\s+"),null), // white spaces
             new Rule(Pattern.compile("(^\"[^\"]*\")|(^'[^']*')"), TokenType.String), // strings
             new Rule(Pattern.compile("^\\d+"), TokenType.Number), // number
@@ -21,7 +22,8 @@ public class Tokenizer {
             new Rule(Pattern.compile("^\\)"), TokenType.CloseParenthesis),
             new Rule(Pattern.compile("^\\w+"), TokenType.Identifier),
             new Rule(Pattern.compile("^="), TokenType.SimpleAssignment),
-            new Rule(Pattern.compile("^\\[\\*\\+\\-\\/]="), TokenType.ComplexAssignment)
+            new Rule(Pattern.compile("^\\[\\*\\+\\-\\/]="), TokenType.ComplexAssignment),
+            new Rule(Pattern.compile("^,"), TokenType.Comma)
     };
 
     int cursor = 0;
