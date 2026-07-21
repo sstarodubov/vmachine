@@ -19,6 +19,9 @@ public class Tokenizer {
             new Rule(Pattern.compile("^[*/]"), TokenType.MultiplicativeOperator),
             new Rule(Pattern.compile("^\\("), TokenType.OpenParenthesis),
             new Rule(Pattern.compile("^\\)"), TokenType.CloseParenthesis),
+            new Rule(Pattern.compile("^\\w+"), TokenType.Identifier),
+            new Rule(Pattern.compile("^="), TokenType.SimpleAssignment),
+            new Rule(Pattern.compile("^\\[\\*\\+\\-\\/]="), TokenType.ComplexAssignment)
     };
 
     int cursor = 0;

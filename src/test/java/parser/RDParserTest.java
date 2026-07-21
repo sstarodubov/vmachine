@@ -275,4 +275,62 @@ class RDParserTest {
                 .as(NumericLiteral.class).value();
         assertEquals(1, value);
     }
+
+    @Test
+    void test17() {
+        final var p = new RDParser();
+        final Program ast = (Program) p.parse("""
+                   x = 41;
+                """);
+        final var assignment =ast.body().as(StatementList.class).statements().getFirst()
+                        .as(ExpressionStatement.class).expression()
+                        .as(AssignmentExpression.class);
+        assertEquals("=", assignment.operator());
+        assertEquals("x", assignment.left().as(Identifier.class).value());
+        assertEquals(41, assignment.right().as(NumericLiteral.class).value());
+    }
+
+
+    @Test
+    void test18() {
+        final var p = new RDParser();
+        final Program ast = (Program) p.parse("""
+                   x = y = 41;
+                """);
+        final var assignment =ast.body().as(StatementList.class).statements().getFirst()
+                .as(ExpressionStatement.class).expression()
+                .as(AssignmentExpression.class);
+        assertEquals(sw("""
+                AssignmentExpression[operator==, 
+                                     left=Identifier[value=x],
+                                     right=AssignmentExpression[operator==,
+                                                                left=Identifier[value=y],
+                                                                right=NumericLiteral[value=41]
+                                                                ]
+                                     ]
+                """), sw(assignment.toString()));
+    }
+
+
+    @Test
+    void test19() {
+        final var p = new RDParser();
+        final Program ast = (Program) p.parse("""
+                   x = y + 41;
+                """);
+        final var assignment =ast.body().as(StatementList.class).statements().getFirst()
+                .as(ExpressionStatement.class).expression()
+                .as(AssignmentExpression.class);
+        System.out.println(assignment);
+        assertEquals(sw("""
+                AssignmentExpression[operator==,
+                                     left=Identifier[value=x],
+                                     right=BinaryExpression[
+                                                        operator=+,
+                                                        left=Identifier[value=y],
+                                                        right=NumericLiteral[value=41]
+                                                        ]
+                                     ]
+                """), sw(assignment.toString()));
+    }
 }

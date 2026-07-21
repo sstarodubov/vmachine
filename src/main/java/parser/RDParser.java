@@ -4,6 +4,7 @@ import parser.node.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.function.Supplier;
 
 /*
@@ -139,10 +140,12 @@ public final class RDParser {
        primaryExpression
        : literal
        | parenthesizedExpression
+       | leftSideExpression
        ;
      */
     AstNode buildPrimaryExpression() {
         return switch (lookahead.type()) {
+            case Identifier -> buildLeftSideExpression();
             case OpenParenthesis -> parenthesizedExpression();
             default -> buildLiteral();
         };
@@ -166,8 +169,54 @@ public final class RDParser {
         ;
      */
     AstNode buildExpression() {
-        return buildAdditiveExpression();
+        return buildAssignmentExpression();
     }
+
+    boolean isAssignmentOperator() {
+        return lookahead.type() == TokenType.SimpleAssignment || lookahead.type() == TokenType.ComplexAssignment;
+    }
+    /*
+      leftSideExpression
+      : identifier
+      ;
+     */
+
+    AstNode buildLeftSideExpression() {
+        return buildIdentifier();
+    }
+
+    /*
+        identifier
+        : IDENTIFIER
+     */
+    AstNode buildIdentifier() {
+        final var token = eat(TokenType.Identifier);
+        return new Identifier(token.value());
+    }
+    /*
+            assignmentExpression
+            : additiveExpression
+            | leftSideExpression assignmentOperator assignmentExpression
+     */
+    AstNode buildAssignmentExpression() {
+       final var left = buildAdditiveExpression();
+       if (!isAssignmentOperator()) {
+           return left;
+       }
+
+       final var operator = lookahead.type() == TokenType.SimpleAssignment
+                             ? eat(TokenType.SimpleAssignment)
+                             : eat(TokenType.ComplexAssignment);
+
+       final var right = buildAssignmentExpression();
+
+       if (!(left instanceof Identifier)) {
+           throw new UnsupportedOperationException("lvalue error: %s".formatted(left));
+       }
+
+       return new AssignmentExpression(operator.value(), left, right);
+    }
+
     /*
        literal
        : stringLiteral
