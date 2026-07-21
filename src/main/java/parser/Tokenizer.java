@@ -22,7 +22,7 @@ public class Tokenizer {
             new Rule(Pattern.compile("^\\)"), TokenType.CloseParenthesis),
             new Rule(Pattern.compile("^\\w+"), TokenType.Identifier),
             new Rule(Pattern.compile("^="), TokenType.SimpleAssignment),
-            new Rule(Pattern.compile("^\\[\\*\\+\\-\\/]="), TokenType.ComplexAssignment),
+            new Rule(Pattern.compile("^\\[\\*\\+-/]="), TokenType.ComplexAssignment),
             new Rule(Pattern.compile("^,"), TokenType.Comma)
     };
 
