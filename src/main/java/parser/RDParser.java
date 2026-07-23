@@ -200,6 +200,16 @@ public final class RDParser {
         return genericBinaryExpression(this::buildMultiplicativeExpression, TokenType.AdditiveOperator);
     }
 
+    /*
+        equalityExpression
+        : relationalExpression EQUALITY_OPERATOR equalityOperator
+        | relationalExpression
+        ;
+     */
+    AstNode buildEqualityExpression() {
+       return genericBinaryExpression(this::buildRelationalExpresssion, TokenType.EqualityOperator);
+    }
+
      /*
         multiplicativeExpression
         : primaryExpression
@@ -209,6 +219,27 @@ public final class RDParser {
     AstNode buildMultiplicativeExpression() {
         return genericBinaryExpression(this::buildPrimaryExpression, TokenType.MultiplicativeOperator);
     }
+
+    AstNode buildLogicalORExpression() {
+       return genericLogicalExpression(this::buildLogicalANDExpression, TokenType.LogicalOr);
+    }
+
+    AstNode buildLogicalANDExpression() {
+        return genericLogicalExpression(this::buildEqualityExpression, TokenType.LogicalAnd);
+    }
+
+    private AstNode genericLogicalExpression (final Supplier<AstNode> mathOp, final TokenType type) {
+        var left = mathOp.get();
+        while (lookahead.type() == type) {
+            final var operator = eat(type);
+            final var right = mathOp.get();
+
+            left = new LogicalExpression(operator.value(), left, right);
+        }
+
+        return left;
+    }
+
     private AstNode genericBinaryExpression(final Supplier<AstNode> mathOp, final TokenType type) {
         var left = mathOp.get();
         while (lookahead.type() == type) {
@@ -280,11 +311,11 @@ public final class RDParser {
     }
     /*
             assignmentExpression
-            :  relationalExpression
+            :  logicalOrExpression
             | leftSideExpression assignmentOperator assignmentExpression
      */
     AstNode buildAssignmentExpression() {
-       final var left = buildRelationalExpresssion();
+       final var left = buildLogicalORExpression();
        if (!isAssignmentOperator()) {
            return left;
        }
@@ -306,16 +337,50 @@ public final class RDParser {
        literal
        : stringLiteral
        | numericalLiteral
+       | booleanLiteral
+       | nullLiteral
        ;
      */
     AstNode buildLiteral() {
         return switch (lookahead.type()) {
+            case TokenType.False, TokenType.True -> buildBooleanLiteral();
             case TokenType.Number -> buildNumericalLiteral();
             case TokenType.String -> buildStringLiteral();
+            case TokenType.Null -> buildNullLiteral();
             default -> throw new UnsupportedOperationException();
         };
     }
+    /*
+      nullLiteral
+      : 'null'
+      ;
+     */
+    NullLiteral buildNullLiteral() {
+        eat(TokenType.Null);
+        return new NullLiteral();
+    }
 
+     /*
+     booleanLiteral
+     : 'true'
+     | 'false'
+     ;
+      */
+    BooleanLiteral buildBooleanLiteral() {
+       final var value = switch (lookahead.type()) {
+           case False -> {
+               eat(TokenType.False);
+               yield false;
+           }
+           case True -> {
+               eat(TokenType.True);
+               yield true;
+           }
+           default -> throw new UnsupportedOperationException("unexpected token: %s".formatted(lookahead));
+       };
+
+       return new BooleanLiteral(value);
+    }
     /*
         stringLiteral
         : STRING

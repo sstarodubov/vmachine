@@ -432,4 +432,51 @@ class RDParserTest {
         assertEquals("x", binaryExp.left().as(Identifier.class).value());
         assertEquals(0, binaryExp.right().as(NumericLiteral.class).value());
     }
+
+
+    @Test
+    void test25() {
+        final var p = new RDParser();
+        final Program ast = (Program) p.parse("""
+               5 + x > 10 == true;
+                """);
+        final var exp = ast.body().as(StatementList.class).statements().getFirst().as(ExpressionStatement.class).expression().as(BinaryExpression.class);
+        assertEquals(sw("""
+                BinaryExpression[operator===,
+                                 left=BinaryExpression[
+                                              operator=>, 
+                                              left=BinaryExpression[
+                                                   operator=+, 
+                                                   left=NumericLiteral[value=5], 
+                                                   right=Identifier[value=x]
+                                                     ],
+                                               right=NumericLiteral[value=10]
+                                              ],
+                                  right=BooleanLiteral[value=true]
+                                  ]
+                """), sw(exp.toString()));
+    }
+
+
+    @Test
+    void test26() {
+        final var p = new RDParser();
+        final Program ast = (Program) p.parse("""
+               5 + x && 10 == true;
+                """);
+        final var exp = ast.body().as(StatementList.class).statements().getFirst().as(ExpressionStatement.class).expression().as(LogicalExpression.class);
+        assertEquals(sw("""
+                LogicalExpression[
+                        value=&&, 
+                        left=BinaryExpression[
+                                    operator=+, 
+                                    left=NumericLiteral[value=5], 
+                                    right=Identifier[value=x]
+                                    ],
+                       right=BinaryExpression[
+                               operator===, 
+                               left=NumericLiteral[value=10], 
+                               right=BooleanLiteral[value=true]]]
+                """), sw(exp.toString()));
+    }
 }

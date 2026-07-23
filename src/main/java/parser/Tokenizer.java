@@ -7,6 +7,12 @@ public class Tokenizer {
     record Rule(Pattern regexp, TokenType type) {}
 
     final Rule[] patternRules  = new Rule[] {
+            new Rule(Pattern.compile("^&&"), TokenType.LogicalAnd),
+            new Rule(Pattern.compile("^\\|\\|"), TokenType.LogicalOr),
+            new Rule(Pattern.compile("^\\btrue\\b"), TokenType.True),
+            new Rule(Pattern.compile("^\\bfalse\\b"), TokenType.False),
+            new Rule(Pattern.compile("^\\bnull\\b"), TokenType.Null),
+            new Rule(Pattern.compile("^[!=]="), TokenType.EqualityOperator),
             new Rule(Pattern.compile("^\\bif\\b"), TokenType.If),
             new Rule(Pattern.compile("^\\belse\\b"),TokenType.Else),
             new Rule(Pattern.compile("^\\blet\\b"), TokenType.Let),
@@ -38,18 +44,6 @@ public class Tokenizer {
 
     boolean hasMoreTokens() {
         return cursor < _string.length();
-    }
-
-    Token extractString(final char qType) {
-        cursor++;
-        final var sb = new StringBuilder();
-        while (hasMoreTokens() && _string.charAt(cursor) != qType) {
-            sb.append(_string.charAt(cursor));
-            cursor++;
-        }
-        cursor++;
-
-        return new Token(TokenType.String, sb.toString());
     }
 
     public Token getNextToken() {
