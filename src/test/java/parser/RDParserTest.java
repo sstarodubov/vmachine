@@ -391,4 +391,45 @@ class RDParserTest {
                             ]
                 """), sw(result.toString()));
     }
+
+    @Test
+    void test23() {
+        final var p = new RDParser();
+        final Program ast = (Program) p.parse("""
+                  let x = 90;
+                  if (x > 10) {
+                     x = 300;
+                  } else {
+                     x = 200;
+                  }
+                """);
+        final var result =ast.body()
+                .as(StatementList.class).statements().getLast()
+                .as(IfExpression.class);
+        assertEquals(sw("""
+              BinaryExpression[operator=>, left=Identifier[value=x], right=NumericLiteral[value=10]]
+                """), sw(result.condition().toString()));
+        assertEquals(sw("""
+                BlockStatement[body=StatementList[statements=[ExpressionStatement[expression=
+                      AssignmentExpression[operator==, left=Identifier[value=x], right=NumericLiteral[value=300]]]]]]
+                """), sw(result.ifStatement().toString()));
+        assertEquals(sw("""
+                BlockStatement[body=StatementList[statements=[ExpressionStatement[
+                expression=AssignmentExpression[operator==, left=Identifier[value=x], right=NumericLiteral[value=200]]]]]]
+                """), sw(result.elseStatement().toString()));
+    }
+
+
+    @Test
+    void test24() {
+        final var p = new RDParser();
+        final Program ast = (Program) p.parse("""
+                x > 0; 
+                """);
+        final var binaryExp = ast.body().as(StatementList.class).statements().getFirst()
+                .as(ExpressionStatement.class).expression().as(BinaryExpression.class);
+        assertEquals(">", binaryExp.operator());
+        assertEquals("x", binaryExp.left().as(Identifier.class).value());
+        assertEquals(0, binaryExp.right().as(NumericLiteral.class).value());
+    }
 }

@@ -48,10 +48,12 @@ public final class RDParser {
       | blockStatement
       | emptyStatement
       | variableStatement
+      | ifStatement
       ;
      */
     AstNode buildStatement() {
         return switch (lookahead.type()) {
+            case TokenType.If -> buildIfStatement();
             case TokenType.Let -> buildVariableStatement();
             case TokenType.OpenedCurlyBrace -> buildBlockStatement();
             case TokenType.Semicolon -> buildEmptyStatement();
@@ -59,6 +61,26 @@ public final class RDParser {
         };
     }
 
+    /*
+        ifStatement
+        : 'if' parenthesizedExpression blockStatement
+        | 'if' parenthesizedExpression blockStatement else blockStatement
+        ;
+     */
+    AstNode buildIfStatement() {
+        eat(TokenType.If);
+        final var condition = buildParenthesizedExpression();
+        final var ifStatement = buildBlockStatement();
+        final AstNode elseStatement = switch (lookahead.type()) {
+            case TokenType.Else -> {
+               eat(TokenType.Else);
+               yield buildBlockStatement();
+            }
+            default -> null;
+        };
+
+        return new IfExpression(condition, ifStatement, elseStatement);
+    }
     /*
         variableStatement
         : 'let' variableDeclarationList ';'
@@ -161,6 +183,14 @@ public final class RDParser {
         return new ExpressionStatement(expression);
     }
     /*
+        relationalExpression
+        : AdditiveExpression
+        | AdditiveExpression RELATIONAL_OPERATOR RelationalExpression
+     */
+    AstNode buildRelationalExpresssion() {
+        return genericBinaryExpression(this::buildAdditiveExpression, TokenType.RelationalOperator);
+    }
+    /*
         additiveExpression
         : multiplicativeExpression
         | additiveExpression ADDITIVE_OPERATOR multiplicativeExpression
@@ -201,7 +231,7 @@ public final class RDParser {
     AstNode buildPrimaryExpression() {
         return switch (lookahead.type()) {
             case Identifier -> buildLeftSideExpression();
-            case OpenParenthesis -> parenthesizedExpression();
+            case OpenParenthesis -> buildParenthesizedExpression();
             default -> buildLiteral();
         };
     }
@@ -211,7 +241,7 @@ public final class RDParser {
         : ( expression )
         ;
      */
-    AstNode parenthesizedExpression() {
+    AstNode buildParenthesizedExpression() {
         eat(TokenType.OpenParenthesis);
         final var exp = buildExpression();
         eat(TokenType.CloseParenthesis);
@@ -250,11 +280,11 @@ public final class RDParser {
     }
     /*
             assignmentExpression
-            : additiveExpression
+            :  relationalExpression
             | leftSideExpression assignmentOperator assignmentExpression
      */
     AstNode buildAssignmentExpression() {
-       final var left = buildAdditiveExpression();
+       final var left = buildRelationalExpresssion();
        if (!isAssignmentOperator()) {
            return left;
        }

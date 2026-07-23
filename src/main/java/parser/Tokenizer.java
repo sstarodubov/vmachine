@@ -7,6 +7,8 @@ public class Tokenizer {
     record Rule(Pattern regexp, TokenType type) {}
 
     final Rule[] patternRules  = new Rule[] {
+            new Rule(Pattern.compile("^\\bif\\b"), TokenType.If),
+            new Rule(Pattern.compile("^\\belse\\b"),TokenType.Else),
             new Rule(Pattern.compile("^\\blet\\b"), TokenType.Let),
             new Rule(Pattern.compile("^\\s+"),null), // white spaces
             new Rule(Pattern.compile("(^\"[^\"]*\")|(^'[^']*')"), TokenType.String), // strings
@@ -23,7 +25,8 @@ public class Tokenizer {
             new Rule(Pattern.compile("^\\w+"), TokenType.Identifier),
             new Rule(Pattern.compile("^="), TokenType.SimpleAssignment),
             new Rule(Pattern.compile("^\\[\\*\\+-/]="), TokenType.ComplexAssignment),
-            new Rule(Pattern.compile("^,"), TokenType.Comma)
+            new Rule(Pattern.compile("^,"), TokenType.Comma),
+            new Rule(Pattern.compile("^[><]=?"), TokenType.RelationalOperator)
     };
 
     int cursor = 0;
@@ -66,6 +69,6 @@ public class Tokenizer {
             }
         }
 
-        throw new UnsupportedOperationException("unsupported token");
+        throw new UnsupportedOperationException("unsupported token: %s".formatted(string));
     }
 }
