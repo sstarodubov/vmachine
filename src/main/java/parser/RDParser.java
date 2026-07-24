@@ -57,8 +57,16 @@ public final class RDParser {
             case TokenType.Let -> buildVariableStatement();
             case TokenType.OpenedCurlyBrace -> buildBlockStatement();
             case TokenType.Semicolon -> buildEmptyStatement();
+            case TokenType.WhileLoop -> buildIterationStatement();
             default -> buildExpressionStatement();
         };
+    }
+
+    WhileStatement buildIterationStatement() {
+        eat(TokenType.WhileLoop);
+        final var condition = buildParenthesizedExpression();
+        final var body = buildBlockStatement();
+        return new WhileStatement(condition, body);
     }
 
     /*

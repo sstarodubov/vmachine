@@ -488,12 +488,10 @@ class RDParserTest {
                -x; 
                 """);
         final var exp = ast.body();
-        System.out.println(exp);
         assertEquals(sw("""
              StatementList[statements=[ExpressionStatement[expression=UnaryExpression[operator=-, argument=Identifier[value=x]]]]] 
                 """), sw(exp.toString()));
     }
-
 
     @Test
     void test28() {
@@ -502,9 +500,28 @@ class RDParserTest {
                !x;
                 """);
         final var exp = ast.body();
-        System.out.println(exp);
         assertEquals(sw("""
              StatementList[statements=[ExpressionStatement[expression=UnaryExpression[operator=!, argument=Identifier[value=x]]]]] 
+                """), sw(exp.toString()));
+    }
+
+    @Test
+    void test29() {
+        final var p = new RDParser();
+        final Program ast = (Program) p.parse("""
+               while(x > 0) {
+                    x-=1;
+               }
+               """);
+        final var exp = ast.body().as(StatementList.class).statements().getLast()
+                .as(WhileStatement.class);
+        assertEquals(sw("""
+                WhileStatement[condition=BinaryExpression[operator=>, left=Identifier[value=x], right=NumericLiteral[value=0]], 
+                            body=BlockStatement[
+                                body=StatementList[statements=
+                                    [ExpressionStatement[expression=
+                                        AssignmentExpression[operator=-=, left=Identifier[value=x], right=NumericLiteral[value=1]]]]]]]
+                
                 """), sw(exp.toString()));
     }
 }

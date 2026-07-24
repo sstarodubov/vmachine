@@ -7,6 +7,8 @@ public class Tokenizer {
     record Rule(Pattern regexp, TokenType type) {}
 
     final Rule[] patternRules  = new Rule[] {
+            new Rule(Pattern.compile("^[*+-]="), TokenType.ComplexAssignment),
+            new Rule(Pattern.compile("^\\bwhile\\b"), TokenType.WhileLoop),
             new Rule(Pattern.compile("^!"), TokenType.LogicalNot),
             new Rule(Pattern.compile("^&&"), TokenType.LogicalAnd),
             new Rule(Pattern.compile("^\\|\\|"), TokenType.LogicalOr),
@@ -31,7 +33,6 @@ public class Tokenizer {
             new Rule(Pattern.compile("^\\)"), TokenType.CloseParenthesis),
             new Rule(Pattern.compile("^\\w+"), TokenType.Identifier),
             new Rule(Pattern.compile("^="), TokenType.SimpleAssignment),
-            new Rule(Pattern.compile("^\\[\\*\\+-/]="), TokenType.ComplexAssignment),
             new Rule(Pattern.compile("^,"), TokenType.Comma),
             new Rule(Pattern.compile("^[><]=?"), TokenType.RelationalOperator)
     };
