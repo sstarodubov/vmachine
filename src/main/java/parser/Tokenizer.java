@@ -7,6 +7,7 @@ public class Tokenizer {
     record Rule(Pattern regexp, TokenType type) {}
 
     final Rule[] patternRules  = new Rule[] {
+            new Rule(Pattern.compile("^!"), TokenType.LogicalNot),
             new Rule(Pattern.compile("^&&"), TokenType.LogicalAnd),
             new Rule(Pattern.compile("^\\|\\|"), TokenType.LogicalOr),
             new Rule(Pattern.compile("^\\btrue\\b"), TokenType.True),

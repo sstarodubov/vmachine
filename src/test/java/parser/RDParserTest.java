@@ -479,4 +479,32 @@ class RDParserTest {
                                right=BooleanLiteral[value=true]]]
                 """), sw(exp.toString()));
     }
+
+
+    @Test
+    void test27() {
+        final var p = new RDParser();
+        final Program ast = (Program) p.parse("""
+               -x; 
+                """);
+        final var exp = ast.body();
+        System.out.println(exp);
+        assertEquals(sw("""
+             StatementList[statements=[ExpressionStatement[expression=UnaryExpression[operator=-, argument=Identifier[value=x]]]]] 
+                """), sw(exp.toString()));
+    }
+
+
+    @Test
+    void test28() {
+        final var p = new RDParser();
+        final Program ast = (Program) p.parse("""
+               !x;
+                """);
+        final var exp = ast.body();
+        System.out.println(exp);
+        assertEquals(sw("""
+             StatementList[statements=[ExpressionStatement[expression=UnaryExpression[operator=!, argument=Identifier[value=x]]]]] 
+                """), sw(exp.toString()));
+    }
 }

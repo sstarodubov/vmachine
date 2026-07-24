@@ -217,7 +217,7 @@ public final class RDParser {
         ;
      */
     AstNode buildMultiplicativeExpression() {
-        return genericBinaryExpression(this::buildPrimaryExpression, TokenType.MultiplicativeOperator);
+        return genericBinaryExpression(this::buildUnaryExpression, TokenType.MultiplicativeOperator);
     }
 
     AstNode buildLogicalORExpression() {
@@ -252,18 +252,56 @@ public final class RDParser {
         return left;
     }
 
+    boolean isLiteral(final Token token) {
+        return switch (token.type()) {
+            case TokenType.False, TokenType.True -> true;
+            case TokenType.Number -> true;
+            case TokenType.String -> true;
+            case TokenType.Null -> true;
+            default -> false;
+        };
+    }
+
+    /*
+        unaryExpression
+        : leftHandSideExpression
+        | ADDITIVE_OPERATOR unaryExpression
+        | '!' unaryExpression
+     */
+
+    AstNode buildUnaryExpression() {
+        final var operator = switch (lookahead.type()) {
+            case AdditiveOperator -> {
+                final var token = eat(TokenType.AdditiveOperator);
+                yield token.value();
+            }
+            case LogicalNot -> {
+                eat(TokenType.LogicalNot);
+                yield "!";
+            }
+            default -> null;
+        };
+        if (operator == null) {
+            return buildLeftSideExpression();
+        }
+        return new UnaryExpression(operator, buildUnaryExpression());
+    }
     /*
        primaryExpression
        : literal
        | parenthesizedExpression
        | leftSideExpression
+       | Identifier
        ;
      */
     AstNode buildPrimaryExpression() {
+        if (isLiteral(lookahead)) {
+            return buildLiteral();
+        }
         return switch (lookahead.type()) {
-            case Identifier -> buildLeftSideExpression();
             case OpenParenthesis -> buildParenthesizedExpression();
-            default -> buildLiteral();
+            case Identifier -> buildIdentifier();
+            default -> buildLeftSideExpression();
         };
     }
 
@@ -293,12 +331,12 @@ public final class RDParser {
     }
     /*
       leftSideExpression
-      : identifier
+      : primaryExpression
       ;
      */
 
     AstNode buildLeftSideExpression() {
-        return buildIdentifier();
+        return buildPrimaryExpression();
     }
 
     /*
